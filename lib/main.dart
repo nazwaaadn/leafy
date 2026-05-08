@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:leafy_app/data/services/connectivity.service.dart';
+import 'package:leafy_app/data/services/hive_service.dart';
+import 'package:leafy_app/data/services/sync_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await HiveService().init();
+  await ConnectivityService().init();
+  SyncService().init();
+  await dotenv.load(fileName: ".env");
+
   runApp(const MyApp());
 }
 
