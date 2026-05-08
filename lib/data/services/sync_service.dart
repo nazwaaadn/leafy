@@ -1,7 +1,7 @@
 import 'dart:async';
 import '../models/detection_result.dart';
 import 'hive_service.dart';
-import 'connectivity.service.dart';
+import 'package:leafy_app/data/services/connectivity_service.dart';
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
