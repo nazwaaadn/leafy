@@ -14,7 +14,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE9E4D9), 
+      backgroundColor: const Color(0xFFF5F5F5), 
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +33,7 @@ class _HomeViewState extends State<HomeView> {
                   const SizedBox(height: 15),
                   _buildScanActionCard(),
                   const SizedBox(height: 30),
-                  const Text("Statistik Kebun",
+                  const Text("Statistik Tanaman",
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -58,9 +58,9 @@ class _HomeViewState extends State<HomeView> {
       padding: const EdgeInsets.only(top: 60, left: 25, right: 25, bottom: 40),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF1B5E20), Color(0xFF388E3C)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1B5E20), Color(0xFF6D4C41)], 
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(35),
@@ -81,7 +81,7 @@ class _HomeViewState extends State<HomeView> {
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Serif')),
-                  Text("Kebun Anda terlihat lebih baik hari ini.",
+                  Text("Tanaman Anda terlihat lebih baik hari ini.",
                       style: TextStyle(color: Colors.white70, fontSize: 14)),
                 ],
               ),
@@ -100,9 +100,9 @@ class _HomeViewState extends State<HomeView> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: const Color(0xFF4E342E).withOpacity(0.6), 
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
+              border: Border.all(color: Colors.white10),
             ),
             child: Row(
               children: [
