@@ -80,16 +80,6 @@ class LoginController extends GetxController {
   }
 
   void goToRegister(BuildContext context) {
-
-    Get.snackbar(
-      'Info',
-      'Halaman pendaftaran belum tersedia.',
-      backgroundColor: const Color(0xFF6B3A2A),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 2),
-    );
+    context.push('/register');
   }
 }

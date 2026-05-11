@@ -10,7 +10,7 @@ class LoginView extends StatelessWidget {
     final LoginController controller = Get.put(LoginController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEAE4D9),
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),

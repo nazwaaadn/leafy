@@ -68,8 +68,8 @@ dev_dependencies:
 flutter:
   assets:
     - .env
-    - assets/best.tflite    # model hasil export
-    - assets/labels.txt     # daftar nama kelas
+    # assets/best.tflite    # model hasil export
+    # assets/labels.txt     # daftar nama kelas
     - assets/images/
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
