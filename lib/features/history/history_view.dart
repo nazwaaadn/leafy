@@ -15,12 +15,12 @@ class HistoryView extends StatelessWidget {
       appBar: _buildAppBar(context, controller),
       body: Column(
         children: [
-          // ── Sub-header: nama bulan aktif ──
+          // Sub-header: nama bulan aktif
           _buildMonthHeader(controller),
-          // ── Kalender horizontal ──
+          // Kalender horizontal 
           _buildCalendar(controller),
           const SizedBox(height: 4),
-          // ── Konten (empty state / list) ──
+          // Konten (empty state / list)
           Expanded(
             child: Obx(() {
               final records = controller.recordsForSelectedDate;
@@ -46,7 +46,7 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // ─── AppBar ────────────────────────────────────────────────────────────────
+  // AppBar
 
   PreferredSizeWidget _buildAppBar(
       BuildContext context, HistoryController controller) {
@@ -80,14 +80,13 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // ─── Month/Year Picker ─────────────────────────────────────────────────────
+  // Month/Year Picker
 
   Future<void> _showMonthYearPicker(
       BuildContext context, HistoryController controller) async {
     final current = controller.activeMonth.value;
 
     // showDatePicker dengan initialDatePickerMode.year membuka di level bulan.
-    // Kita set firstDate & lastDate cukup lebar supaya user bisa navigasi bebas.
     final picked = await showDatePicker(
       context: context,
       initialDate: current,
@@ -128,7 +127,7 @@ class HistoryView extends StatelessWidget {
     }
   }
 
-  // ─── Sub-header: nama bulan aktif ─────────────────────────────────────────
+  // Sub-header: nama bulan aktif 
 
   Widget _buildMonthHeader(HistoryController controller) {
     return Obx(() => Container(
@@ -157,7 +156,7 @@ class HistoryView extends StatelessWidget {
         ));
   }
 
-  // ─── Kalender Horizontal ───────────────────────────────────────────────────
+  // Kalender Horizontal
 
   Widget _buildCalendar(HistoryController controller) {
     return Obx(() {
@@ -271,7 +270,7 @@ class HistoryView extends StatelessWidget {
     });
   }
 
-  // ─── Label tanggal terpilih ────────────────────────────────────────────────
+  // Label tanggal terpilih
 
   Widget _buildDateLabel(HistoryController controller) {
     return Padding(
@@ -287,7 +286,7 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // ─── Empty state ───────────────────────────────────────────────────────────
+  // Empty state
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
@@ -378,7 +377,7 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // ─── List riwayat ──────────────────────────────────────────────────────────
+  // List riwayat
 
   Widget _buildRecordList(BuildContext context, List<ScanRecord> records) {
     return ListView.builder(
@@ -437,7 +436,7 @@ class HistoryView extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // ── Header: Log ID + sync status ──
+                //  Header: Log ID + sync status
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
                   child: Row(
@@ -484,7 +483,7 @@ class HistoryView extends StatelessWidget {
                     ],
                   ),
                 ),
-                // ── Body: icon + info + arrow ──
+                // Body: icon + info + arrow
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
                   child: Row(
@@ -542,7 +541,7 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // ─── Bottom Navigation ─────────────────────────────────────────────────────
+  // Navigasi Bawah
 
   Widget _buildBottomNav(BuildContext context) {
     return BottomAppBar(
@@ -599,7 +598,7 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // ─── FAB ───────────────────────────────────────────────────────────────────
+  // FAB
 
   Widget _buildFab(BuildContext context) {
     return Container(

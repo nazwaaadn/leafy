@@ -26,9 +26,7 @@ class ScanRecord {
   });
 }
 
-// ─────────────────────────────────────────────
 // Controller
-// ─────────────────────────────────────────────
 class HistoryController extends GetxController {
   // Bulan & tahun yang sedang ditampilkan di kalender
   final Rx<DateTime> activeMonth = DateTime(
@@ -39,14 +37,12 @@ class HistoryController extends GetxController {
   // Tanggal yang sedang dipilih (default: hari ini)
   final Rx<DateTime> selectedDate = DateTime.now().obs;
 
-  // ScrollController untuk kalender horizontal – dipakai view agar bisa
-  // di-reset ke awal saat bulan berubah
+  // ScrollController untuk kalender horizontal – dipakai view agar bisa direset ke awal saat bulan berubah
   final ScrollController calendarScrollController = ScrollController();
 
-  // ── Data dummy ──────────────────────────────────────────────────────────────
+  // Data dummy 
   // Disimpan sebagai map statis (key: yyyy-MM-dd) agar mudah di-lookup.
-  // Beberapa entry sengaja dibuat relatif terhadap "today" supaya selalu
-  // terlihat saat demo, sisanya pakai tanggal tetap bulan sebelumnya.
+  // Beberapa entry sengaja dibuat relatif terhadap "today" supaya selalu terlihat saat demo, sisanya pakai tanggal tetap bulan sebelumnya.
   final Map<String, List<ScanRecord>> _dummyData = _buildDummyData();
 
   static Map<String, List<ScanRecord>> _buildDummyData() {
@@ -138,7 +134,7 @@ class HistoryController extends GetxController {
           healthStatus: HealthStatus.healthy,
         ),
       ],
-      // ── Bulan sebelumnya (data historis) ──
+      // Bulan sebelumnya (data historis) 
       _fmt(DateTime(now.year, now.month - 1, 5)): [
         const ScanRecord(
           logId: '#2100',
@@ -170,7 +166,7 @@ class HistoryController extends GetxController {
     };
   }
 
-  // ── Kalender ────────────────────────────────────────────────────────────────
+  // Kalender
 
   /// Jumlah hari dalam bulan yang sedang aktif
   int get daysInActiveMonth {
@@ -187,15 +183,14 @@ class HistoryController extends GetxController {
     );
   }
 
-  // ── Navigasi bulan ──────────────────────────────────────────────────────────
+  // Navigasi bulan
 
   /// Dipanggil saat user memilih bulan/tahun dari date picker
   void changeMonth(DateTime picked) {
     final newMonth = DateTime(picked.year, picked.month);
     activeMonth.value = newMonth;
 
-    // Pilih otomatis tanggal 1 di bulan baru agar tidak ada selected date
-    // yang tidak valid (misal: pilih Feb padahal sebelumnya tgl 31)
+    // Pilih otomatis tanggal 1 di bulan baru agar tidak ada selected date yang tidak valid (misal: pilih Feb padahal sebelumnya tgl 31)
     final firstDay = DateTime(newMonth.year, newMonth.month, 1);
     selectedDate.value = firstDay;
 
@@ -211,7 +206,7 @@ class HistoryController extends GetxController {
     });
   }
 
-  // ── Query data ──────────────────────────────────────────────────────────────
+  // Query data
 
   List<ScanRecord> get recordsForSelectedDate {
     return _dummyData[_fmt(selectedDate.value)] ?? [];
@@ -226,7 +221,7 @@ class HistoryController extends GetxController {
   /// Apakah tanggal punya data (untuk memberi tanda dot di kalender)
   bool hasData(DateTime date) => _dummyData.containsKey(_fmt(date));
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
+  // Helpers 
 
   String dayName(DateTime date) {
     const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
