@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'home_controller.dart';
 
 class HomeView extends StatefulWidget {
@@ -14,7 +15,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), 
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +47,7 @@ class _HomeViewState extends State<HomeView> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _buildBottomNav(context),
       floatingActionButton: _buildFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
@@ -58,7 +59,7 @@ class _HomeViewState extends State<HomeView> {
       padding: const EdgeInsets.only(top: 60, left: 25, right: 25, bottom: 40),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF1B5E20), Color(0xFF6D4C41)], 
+          colors: [Color(0xFF1B5E20), Color(0xFF6D4C41)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -100,7 +101,7 @@ class _HomeViewState extends State<HomeView> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFF4E342E).withOpacity(0.6), 
+              color: const Color(0xFF4E342E).withOpacity(0.6),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white10),
             ),
@@ -203,9 +204,9 @@ class _HomeViewState extends State<HomeView> {
                 Expanded(
                   child: Text(label,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: color,
-                        fontWeight: FontWeight.bold)),
+                          fontSize: 13,
+                          color: color,
+                          fontWeight: FontWeight.bold)),
                 )
               ],
             ),
@@ -221,7 +222,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(BuildContext context) {
     return BottomAppBar(
       height: 70,
       notchMargin: 10,
@@ -229,25 +230,45 @@ class _HomeViewState extends State<HomeView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem(Icons.home_outlined, "Beranda", true),
+          _navItem(
+            icon: Icons.home_outlined,
+            label: 'Beranda',
+            isActive: true,
+            onTap: () {},
+          ),
           const SizedBox(width: 40),
-          _navItem(Icons.history, "Riwayat", false),
+          _navItem(
+            icon: Icons.history,
+            label: 'Riwayat',
+            isActive: false,
+            onTap: () => context.go('/history'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _navItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: isActive ? const Color(0xFF1B5E20) : Colors.grey),
-        Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                color: isActive ? const Color(0xFF1B5E20) : Colors.grey,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal)),
-      ],
+  Widget _navItem({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isActive ? const Color(0xFF1B5E20) : Colors.grey),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: isActive ? const Color(0xFF1B5E20) : Colors.grey,
+                  fontWeight:
+                      isActive ? FontWeight.bold : FontWeight.normal)),
+        ],
+      ),
     );
   }
 
