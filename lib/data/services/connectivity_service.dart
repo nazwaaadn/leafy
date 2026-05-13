@@ -10,7 +10,6 @@ class ConnectivityService {
   final StreamController<bool> _controller = StreamController<bool>.broadcast();
 
   bool _isOnline = false;
-  //
   bool get isOnline => _isOnline;
   bool get isOffline => !_isOnline;
   Stream<bool> get onStatusChange => _controller.stream;

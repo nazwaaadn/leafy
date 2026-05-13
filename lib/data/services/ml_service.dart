@@ -2,37 +2,31 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_vision/flutter_vision.dart';
 
-/// ml_service.dart
-/// Simpan di: lib/data/services/ml_service.dart
-///
-/// Bertanggung jawab HANYA untuk komunikasi langsung dengan model YOLOv8.
-/// best.pt / last.pt harus dikonversi dulu:
-///   yolo export model=best.pt format=onnx
-/// Lalu taruh hasil (best.onnx) di folder assets/
-
 class MlService {
   final FlutterVision _vision = FlutterVision();
   bool _isLoaded = false;
 
-  /// Ganti ke 'assets/last.onnx' untuk testing dengan last.pt
   static const String _modelAsset = 'assets/best.onnx';
   static const String _labelAsset = 'assets/labels.txt';
 
-  /// Load model ke memori — panggil sekali saat controller init
   Future<void> loadModel() async {
     if (_isLoaded) return;
-    await _vision.loadYoloModel(
-      labels: _labelAsset,
-      modelPath: _modelAsset,
-      modelVersion: 'yolov8',
-      quantization: false,
-      numThreads: 2,
-      useGpu: false,
-    );
-    _isLoaded = true;
+    try {
+      await _vision.loadYoloModel(
+        labels: _labelAsset,
+        modelPath: _modelAsset,
+        modelVersion: 'yolov8',
+        quantization: false,
+        numThreads: 2,
+        useGpu: false,
+      );
+      _isLoaded = true;
+    } catch (e) {
+      print("ML_SERVICE_ERROR: Gagal load model (file mungkin belum ada): $e");
+      _isLoaded = false;
+    }
   }
 
-  /// Deteksi dari file foto (mode CAPTURE)
   Future<List<Map<String, dynamic>>> detectFromFile({
     required String imagePath,
     required int imageWidth,
@@ -40,7 +34,9 @@ class MlService {
     double confidenceThreshold = 0.40,
     double iouThreshold = 0.45,
   }) async {
-    if (!_isLoaded) await loadModel();
+    if (!_isLoaded) {
+      return [];
+    }
     final imageBytes = await File(imagePath).readAsBytes();
     return await _vision.yoloOnImage(
       bytesList: imageBytes,
@@ -52,7 +48,6 @@ class MlService {
     );
   }
 
-  /// Deteksi dari frame kamera (mode LIVE)
   Future<List<Map<String, dynamic>>> detectFromCameraFrame({
     required List<Uint8List> bytesList,
     required int imageWidth,
@@ -60,7 +55,9 @@ class MlService {
     double confidenceThreshold = 0.40,
     double iouThreshold = 0.45,
   }) async {
-    if (!_isLoaded) await loadModel();
+    if (!_isLoaded) {
+      return [];
+    }
     return await _vision.yoloOnFrame(
       bytesList: bytesList,
       imageHeight: imageHeight,
@@ -71,7 +68,6 @@ class MlService {
     );
   }
 
-  /// Lepaskan resource model
   Future<void> close() async {
     await _vision.closeYoloModel();
     _isLoaded = false;

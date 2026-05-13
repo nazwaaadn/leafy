@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leafy_app/data/repositories/auth_repository.dart';
 
 class RegisterController extends GetxController {
   final nameController = TextEditingController();
@@ -9,6 +10,7 @@ class RegisterController extends GetxController {
 
   final RxBool isLoading = false.obs;
   final RxBool isPasswordVisible = false.obs;
+  final AuthRepository _authRepository = AuthRepository();
 
   @override
   void onClose() {
@@ -23,7 +25,7 @@ class RegisterController extends GetxController {
   }
 
   bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    final emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$');
     return emailRegex.hasMatch(email);
   }
 
@@ -32,13 +34,11 @@ class RegisterController extends GetxController {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
-    // Validasi nama
     if (name.isEmpty) {
       _showErrorSnackbar('Nama tidak boleh kosong.');
       return;
     }
 
-    // Validasi email
     if (email.isEmpty) {
       _showErrorSnackbar('Email tidak boleh kosong.');
       return;
@@ -48,7 +48,6 @@ class RegisterController extends GetxController {
       return;
     }
 
-    // Validasi password
     if (password.isEmpty) {
       _showErrorSnackbar('Kata sandi tidak boleh kosong.');
       return;
@@ -60,23 +59,31 @@ class RegisterController extends GetxController {
 
     isLoading.value = true;
 
-    // Simulasi proses registrasi (tanpa backend)
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      await _authRepository.register(
+        name: name,
+        email: email,
+        password: password,
+      );
+      isLoading.value = false;
+      _showSuccessSnackbar();
 
-    isLoading.value = false;
-
-    _showSuccessSnackbar();
-
-    // Kembali ke halaman login setelah berhasil
-    if (context.mounted) {
-      context.go('/login');
+      if (context.mounted) {
+        context.go('/login');
+      }
+    } on AuthException catch (e) {
+      isLoading.value = false;
+      _showErrorSnackbar(e.message);
+    } catch (_) {
+      isLoading.value = false;
+      _showErrorSnackbar('Tidak bisa terhubung ke MongoDB.');
     }
   }
 
   void _showSuccessSnackbar() {
     Get.snackbar(
       'Registrasi Berhasil',
-      'Akun kamu berhasil dibuat! Silakan masuk. 🌿',
+      'Akun kamu berhasil dibuat. Silakan masuk.',
       backgroundColor: const Color(0xFF4A7C3F),
       colorText: Colors.white,
       snackPosition: SnackPosition.TOP,

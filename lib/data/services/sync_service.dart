@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../models/detection_result.dart';
 import 'hive_service.dart';
+import 'mongo_service.dart';
 import 'package:leafy_app/data/services/connectivity_service.dart';
 
 class SyncService {
@@ -36,11 +37,9 @@ class SyncService {
 
   Future<bool> _uploadToMongoDB(DetectionResult result) async {
     try {
-      // TODO: implement HTTP call ke MongoDB Atlas / backend API
-      // final response = await http.post(...)
-      // return response.statusCode == 200;
+      await MongoService().insertDetection(result);
       return true;
-    } catch (_) {
+    } catch (e) {
       return false;
     }
   }

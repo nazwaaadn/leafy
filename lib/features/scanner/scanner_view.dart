@@ -1,3 +1,5 @@
+import 'package:leafy_app/core/routes/app_routes.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -7,14 +9,6 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../data/models/detection_result.dart';
 import 'detection_controller.dart';
 import 'scanner_painter.dart';
-
-/// scanner_view.dart
-/// Simpan di: lib/features/scanner/scanner_view.dart
-///
-/// Arsitektur Stack layar:
-///   Layer 0 ── CameraPreview  (live feed hardware)
-///   Layer 1 ── CustomPaint    (bounding box via ScannerPainter)
-///   Layer 2 ── UI controls    (FAB, info bar, mode toggle)
 
 class ScannerView extends StatefulWidget {
   final DetectionController controller;
@@ -27,6 +21,36 @@ class ScannerView extends StatefulWidget {
 
 class _ScannerViewState extends State<ScannerView> {
   DetectionController get _ctrl => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.addListener(_handleStateChange);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.removeListener(_handleStateChange);
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(ScannerView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleStateChange);
+      widget.controller.addListener(_handleStateChange);
+    }
+  }
+
+  void _handleStateChange() {
+    print("DEBUG: _handleStateChange called. State: ${_ctrl.scanState}");
+    if (_ctrl.scanState == ScanState.done && mounted) {
+      print("DEBUG: Scan done, triggering navigation to ResultView");
+      _ctrl.scanState = ScanState.idle;
+      context.push(AppRoutes.result, extra: _ctrl.currentDetections);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +72,6 @@ class _ScannerViewState extends State<ScannerView> {
     );
   }
 
-  // ── AppBar ────────────────────────────────────────────────────
-
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.black87,
@@ -59,7 +81,6 @@ class _ScannerViewState extends State<ScannerView> {
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       actions: [
-        // Mode toggle: CAPTURE ↔ LIVE
         ListenableBuilder(
           listenable: _ctrl,
           builder: (context, _) => TextButton.icon(
@@ -72,18 +93,14 @@ class _ScannerViewState extends State<ScannerView> {
             ),
             label: Text(
               _ctrl.mode == ScanMode.capture ? 'CAPTURE' : 'LIVE',
-              style:
-                  const TextStyle(color: Colors.greenAccent, fontSize: 12),
+              style: const TextStyle(color: Colors.greenAccent, fontSize: 12),
             ),
             onPressed: () => _ctrl.setMode(
-              _ctrl.mode == ScanMode.capture
-                  ? ScanMode.live
-                  : ScanMode.capture,
+              _ctrl.mode == ScanMode.capture ? ScanMode.live : ScanMode.capture,
             ),
           ),
         ),
 
-        // Flashlight
         ListenableBuilder(
           listenable: _ctrl,
           builder: (context, _) => IconButton(
@@ -96,14 +113,11 @@ class _ScannerViewState extends State<ScannerView> {
           ),
         ),
 
-        // Overlay on/off
         ListenableBuilder(
           listenable: _ctrl,
           builder: (context, _) => IconButton(
             icon: Icon(
-              _ctrl.isOverlayVisible
-                  ? Icons.visibility
-                  : Icons.visibility_off,
+              _ctrl.isOverlayVisible ? Icons.visibility : Icons.visibility_off,
               color: Colors.white,
             ),
             onPressed: _ctrl.toggleOverlay,
@@ -111,7 +125,6 @@ class _ScannerViewState extends State<ScannerView> {
           ),
         ),
 
-        // Riwayat
         IconButton(
           icon: const Icon(Icons.history, color: Colors.white),
           onPressed: _showHistory,
@@ -121,26 +134,17 @@ class _ScannerViewState extends State<ScannerView> {
     );
   }
 
-  // ── Body ──────────────────────────────────────────────────────
-
   Widget _buildBody() {
-    // Mode CAPTURE dan sudah ada foto hasil → tampilkan foto + bbox
-    if (_ctrl.mode == ScanMode.capture && _ctrl.capturedImagePath != null) {
-      return _buildCaptureResult();
-    }
-
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Layer 0: Camera preview
-        Center(
+        Positioned.fill(
           child: AspectRatio(
-            aspectRatio: _ctrl.cameraController!.value.aspectRatio,
+            aspectRatio: 1 / _ctrl.cameraController!.value.aspectRatio,
             child: CameraPreview(_ctrl.cameraController!),
           ),
         ),
 
-        // Layer 1: Bounding box overlay
         if (_ctrl.isOverlayVisible)
           Positioned.fill(
             child: CustomPaint(
@@ -148,51 +152,38 @@ class _ScannerViewState extends State<ScannerView> {
             ),
           ),
 
-        // Layer 2: Info bar live
-        if (_ctrl.mode == ScanMode.live &&
-            _ctrl.currentDetections.isNotEmpty)
-          Positioned(
-            top: 8,
-            left: 0,
-            right: 0,
-            child: _buildLiveInfoBar(),
-          ),
+        if (_ctrl.mode == ScanMode.live && _ctrl.currentDetections.isNotEmpty)
+          Positioned(top: 8, left: 0, right: 0, child: _buildLiveInfoBar()),
 
-        // Layer 2: Overlay "mendeteksi..."
-        if (_ctrl.scanState == ScanState.detecting)
-          const _DetectingOverlay(),
+        if (_ctrl.scanState == ScanState.detecting) const _DetectingOverlay(),
       ],
     );
   }
 
-  /// Tampilan setelah capture selesai: foto + bounding box + panel hasil
   Widget _buildCaptureResult() {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Foto hasil
-        Image.file(
-          File(_ctrl.capturedImagePath!),
-          fit: BoxFit.contain,
-        ),
-
-        // Bounding box di atas foto
-        if (_ctrl.isOverlayVisible)
-          Positioned.fill(
-            child: CustomPaint(
-              painter: ScannerPainter(_ctrl.currentDetections),
+        Center(
+          child: AspectRatio(
+            aspectRatio: 1 / _ctrl.cameraController!.value.aspectRatio,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.file(File(_ctrl.capturedImagePath!), fit: BoxFit.cover),
+                if (_ctrl.isOverlayVisible)
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: ScannerPainter(_ctrl.currentDetections),
+                    ),
+                  ),
+              ],
             ),
           ),
-
-        // Panel hasil deteksi
-        Positioned(
-          bottom: 90,
-          left: 0,
-          right: 0,
-          child: _buildResultPanel(),
         ),
 
-        // Tombol ulangi (kiri atas)
+        Positioned(bottom: 90, left: 0, right: 0, child: _buildResultPanel()),
+
         Positioned(
           top: 8,
           left: 8,
@@ -206,8 +197,6 @@ class _ScannerViewState extends State<ScannerView> {
       ],
     );
   }
-
-  // ── Sub-widgets ───────────────────────────────────────────────
 
   Widget _buildLiveInfoBar() {
     return Center(
@@ -270,9 +259,10 @@ class _ScannerViewState extends State<ScannerView> {
           const Text(
             'Hasil Deteksi',
             style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 8),
           ..._ctrl.currentDetections.map(
@@ -280,20 +270,21 @@ class _ScannerViewState extends State<ScannerView> {
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.circle,
-                      color: Colors.greenAccent, size: 8),
+                  const Icon(Icons.circle, color: Colors.greenAccent, size: 8),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(d.label,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 13)),
+                    child: Text(
+                      d.label,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
                   ),
                   Text(
                     '${(d.confidence * 100).toStringAsFixed(1)}%',
                     style: const TextStyle(
-                        color: Colors.greenAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13),
+                      color: Colors.greenAccent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -304,12 +295,8 @@ class _ScannerViewState extends State<ScannerView> {
     );
   }
 
-  // ── FAB ───────────────────────────────────────────────────────
-
   Widget _buildFab() {
-    // Saat hasil capture tampil, FAB utama disembunyikan
     if (_ctrl.capturedImagePath != null) return const SizedBox.shrink();
-    // Mode LIVE tidak butuh FAB
     if (_ctrl.mode == ScanMode.live) return const SizedBox.shrink();
 
     final isDetecting = _ctrl.scanState == ScanState.detecting;
@@ -323,14 +310,14 @@ class _ScannerViewState extends State<ScannerView> {
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white),
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             )
           : const Icon(Icons.camera_alt),
       label: Text(isDetecting ? 'Mendeteksi...' : 'Ambil & Deteksi'),
     );
   }
-
-  // ── Loading ───────────────────────────────────────────────────
 
   Widget _buildLoading() {
     return Center(
@@ -364,8 +351,6 @@ class _ScannerViewState extends State<ScannerView> {
     );
   }
 
-  // ── Riwayat ───────────────────────────────────────────────────
-
   void _showHistory() {
     showModalBottomSheet(
       context: context,
@@ -377,8 +362,6 @@ class _ScannerViewState extends State<ScannerView> {
     );
   }
 }
-
-// ── Widgets pendukung ─────────────────────────────────────────────
 
 class _DetectingOverlay extends StatelessWidget {
   const _DetectingOverlay();
@@ -417,9 +400,10 @@ class _HistorySheet extends StatelessWidget {
           child: Text(
             'Riwayat Deteksi',
             style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold),
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         if (history.isEmpty)
@@ -456,18 +440,25 @@ class _HistorySheet extends StatelessWidget {
                   title: Text(
                     rec.label,
                     style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w500),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   subtitle: Text(
                     '${(rec.confidence * 100).toStringAsFixed(1)}%  •  ${_fmt(rec.detectedAt)}',
-                    style: const TextStyle(
-                        color: Colors.white54, fontSize: 12),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                   trailing: rec.isSynced
-                      ? const Icon(Icons.cloud_done,
-                          color: Colors.greenAccent, size: 18)
-                      : const Icon(Icons.cloud_off,
-                          color: Colors.white38, size: 18),
+                      ? const Icon(
+                          Icons.cloud_done,
+                          color: Colors.greenAccent,
+                          size: 18,
+                        )
+                      : const Icon(
+                          Icons.cloud_off,
+                          color: Colors.white38,
+                          size: 18,
+                        ),
                 );
               },
             ),

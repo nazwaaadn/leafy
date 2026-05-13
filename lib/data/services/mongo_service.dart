@@ -10,10 +10,12 @@ class MongoService {
   Db? _db;
   Future<void>? _connectingFuture;
 
-  Future<DbCollection> _getCollection(String name) async {
+  Future<DbCollection> collection(String name) async {
     if (_db == null || !_db!.isConnected) await connect();
     return _db!.collection(name);
   }
+
+  Future<DbCollection> _getCollection(String name) => collection(name);
 
   Future<void> connect() async {
     if (_db != null && _db!.isConnected) return;
@@ -29,8 +31,10 @@ class MongoService {
 
   Future<void> _connectInternal() async {
     try {
-      final uri = dotenv.env['MONGODB_URI'];
-      if (uri == null) throw Exception('MONGODB_URI tidak ada di .env');
+      final uri = dotenv.env['MONGO_URI'] ?? dotenv.env['MONGODB_URI'];
+      if (uri == null || uri.trim().isEmpty) {
+        throw Exception('MONGO_URI tidak ada di .env');
+      }
 
       if (_db != null) {
         try {
@@ -39,7 +43,7 @@ class MongoService {
         _db = null;
       }
 
-      _db = await Db.create(uri);
+      _db = await Db.create(uri.trim());
       await _db!.open().timeout(
         const Duration(seconds: 5),
         onTimeout: () =>

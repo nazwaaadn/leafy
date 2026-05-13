@@ -20,7 +20,7 @@ class _HomeViewState extends State<HomeView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -53,7 +53,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(top: 60, left: 25, right: 25, bottom: 40),
@@ -73,27 +73,40 @@ class _HomeViewState extends State<HomeView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Halo, Tim Leafy!",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Serif')),
-                  Text("Tanaman Anda terlihat lebih baik hari ini.",
-                      style: TextStyle(color: Colors.white70, fontSize: 14)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Halo, ${_controller.displayName}!",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Serif')),
+                    const Text("Tanaman Anda terlihat lebih baik hari ini.",
+                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  ],
+                ),
               ),
-              const CircleAvatar(
-                radius: 25,
-                backgroundColor: Color(0xFF8D6E63),
-                child: Text("R",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: const Color(0xFF8D6E63),
+                    child: Text(_controller.avatarInitial,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () => _controller.logout(context),
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                  ),
+                ],
               )
             ],
           ),
@@ -135,7 +148,7 @@ class _HomeViewState extends State<HomeView> {
 
   Widget _buildScanActionCard() {
     return InkWell(
-      onTap: _controller.onScanPressed,
+      onTap: () => _controller.onScanPressed(context),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 35),
@@ -293,7 +306,7 @@ class _HomeViewState extends State<HomeView> {
       child: IconButton(
         icon: const Icon(Icons.fullscreen_exit_rounded,
             size: 35, color: Colors.white),
-        onPressed: _controller.onScanPressed,
+        onPressed: () => _controller.onScanPressed(context),
       ),
     );
   }

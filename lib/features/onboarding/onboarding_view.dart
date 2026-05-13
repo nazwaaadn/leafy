@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:go_router/go_router.dart';
@@ -30,13 +31,13 @@ class _OnboardingViewState extends State<OnboardingView>
       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
     );
 
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.12),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+          ),
+        );
 
     _buttonAnim = CurvedAnimation(
       parent: _animController,
@@ -58,36 +59,24 @@ class _OnboardingViewState extends State<OnboardingView>
       backgroundColor: const Color(0xFFF2F5F0),
       body: Stack(
         children: [
-          // ── Background watermark ─────────────────────────────────────
           const _BackgroundWatermark(),
-
-          // ── Content ──────────────────────────────────────────────────
           SafeArea(
             child: Column(
               children: [
                 const Spacer(flex: 2),
-
-                // Logo + Title + Subtitle
                 FadeTransition(
                   opacity: _fadeAnim,
                   child: SlideTransition(
                     position: _slideAnim,
                     child: Column(
                       children: [
-                        // App Icon
                         _buildAppIcon(),
-
                         const SizedBox(height: 24),
-
-                        // "Leafy" gradient text
                         ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF6DB33F),
-                              Color(0xFF3A7D1E),
-                            ],
+                            colors: [Color(0xFF6DB33F), Color(0xFF3A7D1E)],
                           ).createShader(bounds),
                           child: const Text(
                             'Leafy',
@@ -102,8 +91,6 @@ class _OnboardingViewState extends State<OnboardingView>
                         ),
 
                         const SizedBox(height: 12),
-
-                        // Subtitle
                         RichText(
                           textAlign: TextAlign.center,
                           text: const TextSpan(
@@ -135,24 +122,16 @@ class _OnboardingViewState extends State<OnboardingView>
                     ),
                   ),
                 ),
-
                 const Spacer(flex: 3),
-
-                // Bottom section
                 FadeTransition(
                   opacity: _buttonAnim,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(32, 0, 32, 12),
                     child: Column(
                       children: [
-                        // Mulai Sekarang button
                         _buildMulaiButton(context),
-
                         const SizedBox(height: 20),
-
-                        // Terms text
                         _buildTermsText(context),
-
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -174,10 +153,7 @@ class _OnboardingViewState extends State<OnboardingView>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF5A9A2E),
-            Color(0xFF3D6B1A),
-          ],
+          colors: [Color(0xFF5A9A2E), Color(0xFF3D6B1A)],
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
@@ -268,8 +244,6 @@ class _OnboardingViewState extends State<OnboardingView>
   }
 }
 
-// ── Background Watermark ───────────────────────────────────────────────────────
-
 class _BackgroundWatermark extends StatelessWidget {
   const _BackgroundWatermark();
 
@@ -278,9 +252,7 @@ class _BackgroundWatermark extends StatelessWidget {
     return Positioned.fill(
       child: Opacity(
         opacity: 0.07,
-        child: CustomPaint(
-          painter: _WatermarkPainter(),
-        ),
+        child: CustomPaint(painter: _WatermarkPainter()),
       ),
     );
   }
@@ -294,7 +266,6 @@ class _WatermarkPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.8;
 
-    // Draw repeating leaf outlines as watermark
     final positions = [
       Offset(size.width * 0.15, size.height * 0.12),
       Offset(size.width * 0.80, size.height * 0.08),
@@ -324,7 +295,6 @@ class _WatermarkPainter extends CustomPainter {
 
       canvas.drawPath(path, paint);
 
-      // Center vein
       canvas.drawLine(
         const Offset(0, -22),
         const Offset(0, 22),
@@ -339,15 +309,11 @@ class _WatermarkPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ── Scan Leaf Icon Painter ─────────────────────────────────────────────────────
-
 class _ScanLeafPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double cx = size.width / 2;
     final double cy = size.height / 2;
-
-    // Leaf fill
     final leafPaint = Paint()
       ..color = const Color(0xFF8AB83A)
       ..style = PaintingStyle.fill;
@@ -355,21 +321,26 @@ class _ScanLeafPainter extends CustomPainter {
     final leafPath = Path();
     leafPath.moveTo(cx, cy - size.height * 0.42);
     leafPath.cubicTo(
-      cx + size.width * 0.42, cy - size.height * 0.42,
-      cx + size.width * 0.42, cy + size.height * 0.12,
-      cx, cy + size.height * 0.42,
+      cx + size.width * 0.42,
+      cy - size.height * 0.42,
+      cx + size.width * 0.42,
+      cy + size.height * 0.12,
+      cx,
+      cy + size.height * 0.42,
     );
     leafPath.cubicTo(
-      cx - size.width * 0.42, cy + size.height * 0.12,
-      cx - size.width * 0.42, cy - size.height * 0.42,
-      cx, cy - size.height * 0.42,
+      cx - size.width * 0.42,
+      cy + size.height * 0.12,
+      cx - size.width * 0.42,
+      cy - size.height * 0.42,
+      cx,
+      cy - size.height * 0.42,
     );
     leafPath.close();
     canvas.drawPath(leafPath, leafPaint);
 
-    // Scan corner brackets (white)
     final scanPaint = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+      ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round;
@@ -377,49 +348,66 @@ class _ScanLeafPainter extends CustomPainter {
     const double margin = 8.0;
     const double bracketLen = 10.0;
 
-    // Top-left
-    canvas.drawLine(Offset(margin, margin + bracketLen), Offset(margin, margin), scanPaint);
-    canvas.drawLine(Offset(margin, margin), Offset(margin + bracketLen, margin), scanPaint);
-
-    // Top-right
-    canvas.drawLine(Offset(size.width - margin - bracketLen, margin), Offset(size.width - margin, margin), scanPaint);
-    canvas.drawLine(Offset(size.width - margin, margin), Offset(size.width - margin, margin + bracketLen), scanPaint);
-
-    // Bottom-left
-    canvas.drawLine(Offset(margin, size.height - margin - bracketLen), Offset(margin, size.height - margin), scanPaint);
-    canvas.drawLine(Offset(margin, size.height - margin), Offset(margin + bracketLen, size.height - margin), scanPaint);
-
-    // Bottom-right
-    canvas.drawLine(Offset(size.width - margin - bracketLen, size.height - margin), Offset(size.width - margin, size.height - margin), scanPaint);
-    canvas.drawLine(Offset(size.width - margin, size.height - margin), Offset(size.width - margin, size.height - margin - bracketLen), scanPaint);
-
-    // Center target circle
-    canvas.drawCircle(
-      Offset(cx, cy),
-      size.width * 0.16,
-      Paint()
-        ..color = Colors.white.withOpacity(0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0,
+    canvas.drawLine(
+      Offset(margin, margin + bracketLen),
+      Offset(margin, margin),
+      scanPaint,
+    );
+    canvas.drawLine(
+      Offset(margin, margin),
+      Offset(margin + bracketLen, margin),
+      scanPaint,
     );
 
-    // Center dot
-    canvas.drawCircle(
-      Offset(cx, cy),
-      3.0,
-      Paint()
-        ..color = Colors.white.withOpacity(0.9)
-        ..style = PaintingStyle.fill,
+    canvas.drawLine(
+      Offset(size.width - margin - bracketLen, margin),
+      Offset(size.width - margin, margin),
+      scanPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width - margin, margin),
+      Offset(size.width - margin, margin + bracketLen),
+      scanPaint,
+    );
+    canvas.drawLine(
+      Offset(margin, size.height - margin - bracketLen),
+      Offset(margin, size.height - margin),
+      scanPaint,
+    );
+    canvas.drawLine(
+      Offset(margin, size.height - margin),
+      Offset(margin + bracketLen, size.height - margin),
+      scanPaint,
     );
 
-    // Vein line
+    canvas.drawLine(
+      Offset(size.width - margin - bracketLen, size.height - margin),
+      Offset(size.width - margin, size.height - margin),
+      scanPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width - margin, size.height - margin),
+      Offset(size.width - margin, size.height - margin - bracketLen),
+      scanPaint,
+    );
+
+    final circlePaint = Paint()
+      ..color = Colors.white.withOpacity(0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawCircle(Offset(cx, cy), size.width * 0.16, circlePaint);
+    final dotPaint = Paint()
+      ..color = Colors.white.withOpacity(0.9)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(cx, cy), 3.0, dotPaint);
+    final veinPaint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
     canvas.drawLine(
       Offset(cx, cy - size.height * 0.35),
       Offset(cx, cy + size.height * 0.35),
-      Paint()
-        ..color = Colors.white.withOpacity(0.3)
-        ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round,
+      veinPaint,
     );
   }
 

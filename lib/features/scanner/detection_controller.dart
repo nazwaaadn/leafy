@@ -9,57 +9,33 @@ import '../../data/models/detection_result.dart';
 import '../../data/repositories/detection_repository.dart';
 import '../../data/services/ml_service.dart';
 
-/// detection_controller.dart
-/// Simpan di: lib/features/scanner/detection_controller.dart
-///
-/// Mengelola:
-/// - Lifecycle kamera (sama pattern dengan VisionController di modul)
-/// - Inferensi YOLOv8 via MlService
-/// - Simpan hasil ke Hive via DetectionRepository
-/// - Mode CAPTURE (foto → deteksi) dan LIVE (stream real-time)
-
 enum ScanMode { capture, live }
 
 enum ScanState { idle, detecting, done, error }
 
 class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
-  // ── Dependencies ──────────────────────────────────────────────
   final MlService _mlService = MlService();
   final DetectionRepository _repository;
 
   DetectionController({required DetectionRepository repository})
-      : _repository = repository {
+    : _repository = repository {
     WidgetsBinding.instance.addObserver(this);
     _init();
   }
 
-  // ── Kamera ────────────────────────────────────────────────────
   CameraController? cameraController;
   bool isInitialized = false;
   String? errorMessage;
-
-  // ── State ─────────────────────────────────────────────────────
   ScanMode mode = ScanMode.capture;
   ScanState scanState = ScanState.idle;
-
-  // ── Hasil deteksi (in-memory, tidak di-Hive) ──────────────────
   List<DetectionItem> currentDetections = [];
   String? capturedImagePath;
-
-  // ── Live throttle ─────────────────────────────────────────────
   bool _isProcessingFrame = false;
-
-  // ── UX toggles ────────────────────────────────────────────────
   bool isFlashlightOn = false;
   bool isOverlayVisible = true;
 
-  // ── Init ──────────────────────────────────────────────────────
-
   Future<void> _init() async {
-    await Future.wait([
-      _mlService.loadModel(),
-      initCamera(),
-    ]);
+    await Future.wait([_mlService.loadModel(), initCamera()]);
   }
 
   Future<void> initCamera() async {
@@ -73,7 +49,7 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
 
       cameraController = CameraController(
         cameras[0],
-        ResolutionPreset.high,
+        ResolutionPreset.medium,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.yuv420,
       );
@@ -88,8 +64,6 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
     }
     notifyListeners();
   }
-
-  // ── Mode switching ────────────────────────────────────────────
 
   Future<void> setMode(ScanMode newMode) async {
     if (mode == newMode) return;
@@ -106,8 +80,6 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  // ── Live detection ────────────────────────────────────────────
-
   void _startLiveStream() {
     if (cameraController == null || !cameraController!.value.isInitialized) {
       return;
@@ -122,15 +94,17 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
           imageHeight: image.height,
         );
         currentDetections = raw
-            .map((r) => DetectionItem.fromRaw(
-                  raw: r,
-                  imageWidth: image.width,
-                  imageHeight: image.height,
-                ))
+            .map(
+              (r) => DetectionItem.fromRaw(
+                raw: r,
+                imageWidth: image.width,
+                imageHeight: image.height,
+              ),
+            )
             .toList();
         scanState = ScanState.done;
       } catch (_) {
-        // abaikan error frame tunggal
+        // Skip
       } finally {
         _isProcessingFrame = false;
         notifyListeners();
@@ -139,13 +113,10 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _stopLiveStream() async {
-    if (cameraController != null &&
-        cameraController!.value.isStreamingImages) {
+    if (cameraController != null && cameraController!.value.isStreamingImages) {
       await cameraController!.stopImageStream();
     }
   }
-
-  // ── Capture detection ─────────────────────────────────────────
 
   Future<void> captureAndDetect() async {
     if (cameraController == null || !cameraController!.value.isInitialized) {
@@ -157,11 +128,7 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
 
     try {
-      await cameraController!.pausePreview();
-      await Future.delayed(const Duration(milliseconds: 100));
       final xFile = await cameraController!.takePicture();
-      await cameraController!.resumePreview();
-
       capturedImagePath = xFile.path;
 
       final imageBytes = await File(xFile.path).readAsBytes();
@@ -174,16 +141,17 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
       );
 
       currentDetections = raw
-          .map((r) => DetectionItem.fromRaw(
-                raw: r,
-                imageWidth: decoded.width,
-                imageHeight: decoded.height,
-              ))
+          .map(
+            (r) => DetectionItem.fromRaw(
+              raw: r,
+              imageWidth: decoded.width,
+              imageHeight: decoded.height,
+            ),
+          )
           .toList();
 
       scanState = ScanState.done;
 
-      // Simpan ke Hive via DetectionResult (model yang sudah ada, typeId:0)
       await _saveToHive(imagePath: xFile.path);
     } catch (e) {
       errorMessage = 'Deteksi gagal: $e';
@@ -192,14 +160,11 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  // ── Simpan ke Hive via DetectionResult (typeId:0) ─────────────
-
   Future<void> _saveToHive({required String imagePath}) async {
     if (currentDetections.isEmpty) return;
-
-    // Ambil deteksi dengan confidence tertinggi sebagai label utama
-    final best = currentDetections
-        .reduce((a, b) => a.confidence >= b.confidence ? a : b);
+    final best = currentDetections.reduce(
+      (a, b) => a.confidence >= b.confidence ? a : b,
+    );
 
     final record = DetectionResult(
       id: const Uuid().v4(),
@@ -213,11 +178,7 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
     await _repository.save(record);
   }
 
-  // ── Riwayat ───────────────────────────────────────────────────
-
   List<DetectionResult> get history => _repository.getAll();
-
-  // ── UX helpers ────────────────────────────────────────────────
 
   Future<void> toggleFlashlight() async {
     if (cameraController == null || !cameraController!.value.isInitialized) {
@@ -246,8 +207,6 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
     errorMessage = null;
     notifyListeners();
   }
-
-  // ── Lifecycle ─────────────────────────────────────────────────
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {

@@ -10,9 +10,15 @@ class HiveService {
   late Box<DetectionResult> _box;
 
   Future<void> init() async {
-    await Hive.initFlutter();
-    Hive.registerAdapter(DetectionResultAdapter());
-    _box = await Hive.openBox<DetectionResult>(_boxName);
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(DetectionResultAdapter());
+    }
+    if (!Hive.isBoxOpen(_boxName)) {
+      _box = await Hive.openBox<DetectionResult>(_boxName);
+      return;
+    }
+
+    _box = Hive.box<DetectionResult>(_boxName);
   }
 
   Future<void> save(DetectionResult result) async {

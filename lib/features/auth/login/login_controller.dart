@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leafy_app/data/repositories/auth_repository.dart';
+import 'package:leafy_app/data/services/session_service.dart';
 
 class LoginController extends GetxController {
   final emailController = TextEditingController();
@@ -8,8 +10,8 @@ class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isPasswordVisible = false.obs;
   final RxString errorMessage = ''.obs;
-  static const String _dummyEmail = 'leafy@gmail.com';
-  static const String _dummyPassword = 'leafy123';
+  final AuthRepository _authRepository = AuthRepository();
+  final SessionService _sessionService = SessionService();
 
   @override
   void onClose() {
@@ -35,18 +37,22 @@ class LoginController extends GetxController {
 
     isLoading.value = true;
 
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (email == _dummyEmail && password == _dummyPassword) {
+    try {
+      final user = await _authRepository.login(email: email, password: password);
+      await _sessionService.saveUser(user);
       isLoading.value = false;
       _showSuccessSnackbar();
 
       if (context.mounted) {
-        context.go('/home');
+        context.go('/splash');
       }
-    } else {
+    } on AuthException catch (e) {
       isLoading.value = false;
-      errorMessage.value = 'Email atau kata sandi salah.';
+      errorMessage.value = e.message;
+      _showErrorSnackbar();
+    } catch (_) {
+      isLoading.value = false;
+      errorMessage.value = 'Tidak bisa terhubung ke MongoDB.';
       _showErrorSnackbar();
     }
   }
@@ -54,7 +60,7 @@ class LoginController extends GetxController {
   void _showSuccessSnackbar() {
     Get.snackbar(
       'Berhasil Masuk',
-      'Selamat datang di Leafy! 🌿',
+      'Selamat datang di Leafy!',
       backgroundColor: const Color(0xFF4A7C3F),
       colorText: Colors.white,
       snackPosition: SnackPosition.TOP,

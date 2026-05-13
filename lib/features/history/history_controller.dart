@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-// ─────────────────────────────────────────────
-// Model
-// ─────────────────────────────────────────────
 enum SyncStatus { local, synced }
 
 enum HealthStatus { healthy, diseased }
@@ -26,29 +23,20 @@ class ScanRecord {
   });
 }
 
-// Controller
 class HistoryController extends GetxController {
-  // Bulan & tahun yang sedang ditampilkan di kalender
   final Rx<DateTime> activeMonth = DateTime(
     DateTime.now().year,
     DateTime.now().month,
   ).obs;
 
-  // Tanggal yang sedang dipilih (default: hari ini)
   final Rx<DateTime> selectedDate = DateTime.now().obs;
-
-  // ScrollController untuk kalender horizontal – dipakai view agar bisa direset ke awal saat bulan berubah
   final ScrollController calendarScrollController = ScrollController();
 
-  // Data dummy 
-  // Disimpan sebagai map statis (key: yyyy-MM-dd) agar mudah di-lookup.
-  // Beberapa entry sengaja dibuat relatif terhadap "today" supaya selalu terlihat saat demo, sisanya pakai tanggal tetap bulan sebelumnya.
   final Map<String, List<ScanRecord>> _dummyData = _buildDummyData();
 
   static Map<String, List<ScanRecord>> _buildDummyData() {
     final now = DateTime.now();
     return {
-      // ── Bulan ini ──
       _fmt(DateTime(now.year, now.month, 1)): [
         const ScanRecord(
           logId: '#3001',
@@ -77,7 +65,6 @@ class HistoryController extends GetxController {
           healthStatus: HealthStatus.healthy,
         ),
       ],
-      // Hari ini selalu ada data
       _fmt(now): [
         const ScanRecord(
           logId: '#3500',
@@ -88,7 +75,6 @@ class HistoryController extends GetxController {
           healthStatus: HealthStatus.healthy,
         ),
       ],
-      // 2 hari lalu
       _fmt(now.subtract(const Duration(days: 2))): [
         const ScanRecord(
           logId: '#3461',
@@ -115,7 +101,6 @@ class HistoryController extends GetxController {
           healthStatus: HealthStatus.healthy,
         ),
       ],
-      // 4 hari lalu
       _fmt(now.subtract(const Duration(days: 4))): [
         const ScanRecord(
           logId: '#2816',
@@ -134,7 +119,6 @@ class HistoryController extends GetxController {
           healthStatus: HealthStatus.healthy,
         ),
       ],
-      // Bulan sebelumnya (data historis) 
       _fmt(DateTime(now.year, now.month - 1, 5)): [
         const ScanRecord(
           logId: '#2100',
@@ -166,15 +150,11 @@ class HistoryController extends GetxController {
     };
   }
 
-  // Kalender
-
-  /// Jumlah hari dalam bulan yang sedang aktif
-  int get daysInActiveMonth {
+    int get daysInActiveMonth {
     final m = activeMonth.value;
     return DateTime(m.year, m.month + 1, 0).day;
   }
 
-  /// Menghasilkan list DateTime dari tanggal 1 s/d akhir bulan aktif
   List<DateTime> get calendarDays {
     final m = activeMonth.value;
     return List.generate(
@@ -183,18 +163,13 @@ class HistoryController extends GetxController {
     );
   }
 
-  // Navigasi bulan
-
-  /// Dipanggil saat user memilih bulan/tahun dari date picker
   void changeMonth(DateTime picked) {
     final newMonth = DateTime(picked.year, picked.month);
     activeMonth.value = newMonth;
 
-    // Pilih otomatis tanggal 1 di bulan baru agar tidak ada selected date yang tidak valid (misal: pilih Feb padahal sebelumnya tgl 31)
     final firstDay = DateTime(newMonth.year, newMonth.month, 1);
     selectedDate.value = firstDay;
 
-    // Scroll kalender kembali ke awal
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (calendarScrollController.hasClients) {
         calendarScrollController.animateTo(
@@ -206,8 +181,6 @@ class HistoryController extends GetxController {
     });
   }
 
-  // Query data
-
   List<ScanRecord> get recordsForSelectedDate {
     return _dummyData[_fmt(selectedDate.value)] ?? [];
   }
@@ -218,10 +191,7 @@ class HistoryController extends GetxController {
 
   bool isSelected(DateTime date) => _fmt(date) == _fmt(selectedDate.value);
 
-  /// Apakah tanggal punya data (untuk memberi tanda dot di kalender)
   bool hasData(DateTime date) => _dummyData.containsKey(_fmt(date));
-
-  // Helpers 
 
   String dayName(DateTime date) {
     const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
@@ -237,7 +207,6 @@ class HistoryController extends GetxController {
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 
-  /// Label header: "Mei 2026"
   String formattedActiveMonth() {
     const months = [
       'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',

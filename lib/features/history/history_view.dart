@@ -15,12 +15,9 @@ class HistoryView extends StatelessWidget {
       appBar: _buildAppBar(context, controller),
       body: Column(
         children: [
-          // Sub-header: nama bulan aktif
           _buildMonthHeader(controller),
-          // Kalender horizontal 
           _buildCalendar(controller),
           const SizedBox(height: 4),
-          // Konten (empty state / list)
           Expanded(
             child: Obx(() {
               final records = controller.recordsForSelectedDate;
@@ -45,8 +42,6 @@ class HistoryView extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
-
-  // AppBar
 
   PreferredSizeWidget _buildAppBar(
       BuildContext context, HistoryController controller) {
@@ -80,13 +75,10 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // Month/Year Picker
-
   Future<void> _showMonthYearPicker(
       BuildContext context, HistoryController controller) async {
     final current = controller.activeMonth.value;
 
-    // showDatePicker dengan initialDatePickerMode.year membuka di level bulan.
     final picked = await showDatePicker(
       context: context,
       initialDate: current,
@@ -97,11 +89,10 @@ class HistoryView extends StatelessWidget {
       cancelText: 'Batal',
       confirmText: 'Pilih',
       builder: (context, child) {
-        // Terapkan tema warna sesuai palet Leafy
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6B3A2A),       // header & selected
+              primary: Color(0xFF6B3A2A),
               onPrimary: Colors.white,
               onSurface: Color(0xFF4A3728),
               surface: Colors.white,
@@ -126,8 +117,6 @@ class HistoryView extends StatelessWidget {
       controller.changeMonth(picked);
     }
   }
-
-  // Sub-header: nama bulan aktif 
 
   Widget _buildMonthHeader(HistoryController controller) {
     return Obx(() => Container(
@@ -156,11 +145,8 @@ class HistoryView extends StatelessWidget {
         ));
   }
 
-  // Kalender Horizontal
-
   Widget _buildCalendar(HistoryController controller) {
     return Obx(() {
-      // Rebuild saat activeMonth berubah
       final days = controller.calendarDays;
 
       return Container(
@@ -229,7 +215,6 @@ class HistoryView extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 3),
-                            // Dot indikator ada data
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
                               width: 5,
@@ -251,7 +236,6 @@ class HistoryView extends StatelessWidget {
                 },
               ),
             ),
-            // Garis pemisah halus
             Container(
               height: 1,
               decoration: BoxDecoration(
@@ -270,8 +254,6 @@ class HistoryView extends StatelessWidget {
     });
   }
 
-  // Label tanggal terpilih
-
   Widget _buildDateLabel(HistoryController controller) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -285,8 +267,6 @@ class HistoryView extends StatelessWidget {
       ),
     );
   }
-
-  // Empty state
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
@@ -377,8 +357,6 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // List riwayat
-
   Widget _buildRecordList(BuildContext context, List<ScanRecord> records) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
@@ -436,7 +414,6 @@ class HistoryView extends StatelessWidget {
             ),
             child: Column(
               children: [
-                //  Header: Log ID + sync status
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
                   child: Row(
@@ -483,7 +460,6 @@ class HistoryView extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Body: icon + info + arrow
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
                   child: Row(
@@ -541,8 +517,6 @@ class HistoryView extends StatelessWidget {
     );
   }
 
-  // Navigasi Bawah
-
   Widget _buildBottomNav(BuildContext context) {
     return BottomAppBar(
       height: 70,
@@ -597,8 +571,6 @@ class HistoryView extends StatelessWidget {
       ),
     );
   }
-
-  // FAB
 
   Widget _buildFab(BuildContext context) {
     return Container(

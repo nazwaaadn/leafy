@@ -3,24 +3,16 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/detection_item.dart';
 
-/// scanner_painter.dart
-/// Simpan di: lib/features/scanner/scanner_painter.dart
-///
-/// CustomPainter untuk menggambar bounding box YOLOv8
-/// di atas CameraPreview atau foto statis.
-/// Pattern sama dengan DamagePainter di modul zip.
-
 class ScannerPainter extends CustomPainter {
   final List<DetectionItem> detections;
 
-  /// Warna per kelas — sesuaikan dengan label training Anda di labels.txt
   static const Map<String, Color> _classColors = {
-    'Leaf Blight':    Color(0xFFE53935), // Merah   – parah
-    'Leaf Spot':      Color(0xFFFB8C00), // Oranye  – sedang
-    'Powdery Mildew': Color(0xFFFDD835), // Kuning  – ringan
-    'Rust':           Color(0xFF8D6E63), // Coklat
-    'Mosaic Virus':   Color(0xFF7B1FA2), // Ungu
-    'Healthy':        Color(0xFF43A047), // Hijau   – sehat
+    'Leaf Blight': Color(0xFFE53935),
+    'Leaf Spot': Color(0xFFFB8C00),
+    'Powdery Mildew': Color(0xFFFDD835),
+    'Rust': Color(0xFF8D6E63),
+    'Mosaic Virus': Color(0xFF7B1FA2),
+    'Healthy': Color(0xFF43A047),
   };
 
   const ScannerPainter(this.detections);
@@ -35,8 +27,6 @@ class ScannerPainter extends CustomPainter {
       _drawBox(canvas, size, det);
     }
   }
-
-  // ── Crosshair saat belum ada deteksi ─────────────────────────
 
   void _drawScanGuide(Canvas canvas, Size size) {
     final cx = size.width / 2;
@@ -68,20 +58,16 @@ class ScannerPainter extends CustomPainter {
     );
   }
 
-  // ── Bounding box + label ──────────────────────────────────────
-
   void _drawBox(Canvas canvas, Size size, DetectionItem det) {
-    // Denormalisasi koordinat ke piksel layar
     final rect = Rect.fromLTRB(
-      det.box.left   * size.width,
-      det.box.top    * size.height,
-      det.box.right  * size.width,
+      det.box.left * size.width,
+      det.box.top * size.height,
+      det.box.right * size.width,
       det.box.bottom * size.height,
     );
 
     final color = _colorForLabel(det.label);
 
-    // Shadow
     canvas.drawRect(
       rect,
       Paint()
@@ -89,7 +75,6 @@ class ScannerPainter extends CustomPainter {
         ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4),
     );
 
-    // Box utama
     canvas.drawRect(
       rect,
       Paint()
@@ -98,10 +83,8 @@ class ScannerPainter extends CustomPainter {
         ..style = PaintingStyle.stroke,
     );
 
-    // Corner accent (sudut tebal)
     _drawCorners(canvas, rect, color);
 
-    // Label
     _drawBoxLabel(canvas, rect, det, color);
   }
 
@@ -113,18 +96,26 @@ class ScannerPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    // Kiri atas
     canvas.drawLine(rect.topLeft, rect.topLeft + const Offset(len, 0), p);
     canvas.drawLine(rect.topLeft, rect.topLeft + const Offset(0, len), p);
-    // Kanan atas
     canvas.drawLine(rect.topRight, rect.topRight + const Offset(-len, 0), p);
     canvas.drawLine(rect.topRight, rect.topRight + const Offset(0, len), p);
-    // Kiri bawah
     canvas.drawLine(rect.bottomLeft, rect.bottomLeft + const Offset(len, 0), p);
-    canvas.drawLine(rect.bottomLeft, rect.bottomLeft + const Offset(0, -len), p);
-    // Kanan bawah
-    canvas.drawLine(rect.bottomRight, rect.bottomRight + const Offset(-len, 0), p);
-    canvas.drawLine(rect.bottomRight, rect.bottomRight + const Offset(0, -len), p);
+    canvas.drawLine(
+      rect.bottomLeft,
+      rect.bottomLeft + const Offset(0, -len),
+      p,
+    );
+    canvas.drawLine(
+      rect.bottomRight,
+      rect.bottomRight + const Offset(-len, 0),
+      p,
+    );
+    canvas.drawLine(
+      rect.bottomRight,
+      rect.bottomRight + const Offset(0, -len),
+      p,
+    );
   }
 
   void _drawBoxLabel(Canvas canvas, Rect box, DetectionItem det, Color color) {
@@ -136,7 +127,6 @@ class ScannerPainter extends CustomPainter {
     final tp = _textPainter(text, Colors.white, fontSize);
     tp.layout();
 
-    // Posisi label: di atas box; geser ke bawah jika terpotong tepi atas
     double labelTop = box.top - tp.height - padding * 2;
     if (labelTop < 0) labelTop = box.bottom + padding;
 
@@ -147,7 +137,6 @@ class ScannerPainter extends CustomPainter {
       tp.height + padding * 2,
     );
 
-    // Background label
     canvas.drawRRect(
       RRect.fromRectAndRadius(bgRect, const Radius.circular(4)),
       Paint()..color = color.withOpacity(0.85),
@@ -155,8 +144,6 @@ class ScannerPainter extends CustomPainter {
 
     tp.paint(canvas, Offset(bgRect.left + padding, bgRect.top + padding));
   }
-
-  // ── Helpers ───────────────────────────────────────────────────
 
   TextPainter _textPainter(String text, Color color, double fontSize) {
     return TextPainter(
