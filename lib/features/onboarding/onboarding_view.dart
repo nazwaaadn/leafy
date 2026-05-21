@@ -58,28 +58,21 @@ class _OnboardingViewState extends State<OnboardingView>
       backgroundColor: const Color(0xFFF2F5F0),
       body: Stack(
         children: [
-          // ── Background watermark ─────────────────────────────────────
           const _BackgroundWatermark(),
-
-          // ── Content ──────────────────────────────────────────────────
           SafeArea(
             child: Column(
               children: [
                 const Spacer(flex: 2),
-
-                // Logo + Title + Subtitle
                 FadeTransition(
                   opacity: _fadeAnim,
                   child: SlideTransition(
                     position: _slideAnim,
                     child: Column(
                       children: [
-                        // App Icon
                         _buildAppIcon(),
 
                         const SizedBox(height: 24),
 
-                        // "Leafy" gradient text
                         ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
                             begin: Alignment.topLeft,
@@ -103,7 +96,6 @@ class _OnboardingViewState extends State<OnboardingView>
 
                         const SizedBox(height: 12),
 
-                        // Subtitle
                         RichText(
                           textAlign: TextAlign.center,
                           text: const TextSpan(
@@ -138,19 +130,16 @@ class _OnboardingViewState extends State<OnboardingView>
 
                 const Spacer(flex: 3),
 
-                // Bottom section
                 FadeTransition(
                   opacity: _buttonAnim,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(32, 0, 32, 12),
                     child: Column(
                       children: [
-                        // Mulai Sekarang button
                         _buildMulaiButton(context),
 
                         const SizedBox(height: 20),
 
-                        // Terms text
                         _buildTermsText(context),
 
                         const SizedBox(height: 24),
@@ -245,7 +234,6 @@ class _OnboardingViewState extends State<OnboardingView>
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
-                // TODO: open privacy policy
               },
           ),
           const TextSpan(text: ' · '),
@@ -259,7 +247,6 @@ class _OnboardingViewState extends State<OnboardingView>
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
-                // TODO: open terms of service
               },
           ),
         ],
@@ -268,7 +255,6 @@ class _OnboardingViewState extends State<OnboardingView>
   }
 }
 
-// ── Background Watermark ───────────────────────────────────────────────────────
 
 class _BackgroundWatermark extends StatelessWidget {
   const _BackgroundWatermark();
@@ -294,7 +280,6 @@ class _WatermarkPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.8;
 
-    // Draw repeating leaf outlines as watermark
     final positions = [
       Offset(size.width * 0.15, size.height * 0.12),
       Offset(size.width * 0.80, size.height * 0.08),
@@ -324,7 +309,6 @@ class _WatermarkPainter extends CustomPainter {
 
       canvas.drawPath(path, paint);
 
-      // Center vein
       canvas.drawLine(
         const Offset(0, -22),
         const Offset(0, 22),
@@ -339,7 +323,6 @@ class _WatermarkPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ── Scan Leaf Icon Painter ─────────────────────────────────────────────────────
 
 class _ScanLeafPainter extends CustomPainter {
   @override
@@ -347,7 +330,6 @@ class _ScanLeafPainter extends CustomPainter {
     final double cx = size.width / 2;
     final double cy = size.height / 2;
 
-    // Leaf fill
     final leafPaint = Paint()
       ..color = const Color(0xFF8AB83A)
       ..style = PaintingStyle.fill;
@@ -367,7 +349,6 @@ class _ScanLeafPainter extends CustomPainter {
     leafPath.close();
     canvas.drawPath(leafPath, leafPaint);
 
-    // Scan corner brackets (white)
     final scanPaint = Paint()
       ..color = Colors.white.withOpacity(0.9)
       ..style = PaintingStyle.stroke
@@ -377,23 +358,19 @@ class _ScanLeafPainter extends CustomPainter {
     const double margin = 8.0;
     const double bracketLen = 10.0;
 
-    // Top-left
     canvas.drawLine(Offset(margin, margin + bracketLen), Offset(margin, margin), scanPaint);
     canvas.drawLine(Offset(margin, margin), Offset(margin + bracketLen, margin), scanPaint);
 
-    // Top-right
+
     canvas.drawLine(Offset(size.width - margin - bracketLen, margin), Offset(size.width - margin, margin), scanPaint);
     canvas.drawLine(Offset(size.width - margin, margin), Offset(size.width - margin, margin + bracketLen), scanPaint);
 
-    // Bottom-left
     canvas.drawLine(Offset(margin, size.height - margin - bracketLen), Offset(margin, size.height - margin), scanPaint);
     canvas.drawLine(Offset(margin, size.height - margin), Offset(margin + bracketLen, size.height - margin), scanPaint);
 
-    // Bottom-right
     canvas.drawLine(Offset(size.width - margin - bracketLen, size.height - margin), Offset(size.width - margin, size.height - margin), scanPaint);
     canvas.drawLine(Offset(size.width - margin, size.height - margin), Offset(size.width - margin, size.height - margin - bracketLen), scanPaint);
 
-    // Center target circle
     canvas.drawCircle(
       Offset(cx, cy),
       size.width * 0.16,
@@ -403,7 +380,6 @@ class _ScanLeafPainter extends CustomPainter {
         ..strokeWidth = 2.0,
     );
 
-    // Center dot
     canvas.drawCircle(
       Offset(cx, cy),
       3.0,
@@ -412,7 +388,6 @@ class _ScanLeafPainter extends CustomPainter {
         ..style = PaintingStyle.fill,
     );
 
-    // Vein line
     canvas.drawLine(
       Offset(cx, cy - size.height * 0.35),
       Offset(cx, cy + size.height * 0.35),
