@@ -6,6 +6,7 @@ import '../../features/auth/register/register_view.dart';
 import '../../features/home/home_view.dart';
 import '../../features/history/history_view.dart';
 import '../../features/history/detail/detail_history_view.dart';
+import '../../features/history/history_controller.dart';
 import '../../features/scanner/scanner_view.dart';
 import '../../features/scanner/detection_controller.dart';
 import '../../features/result/result_view.dart';
@@ -42,7 +43,10 @@ GoRouter createAppRouter({required bool isLoggedIn}) {
       ),
       GoRoute(
         path: AppRoutes.historyDetail,
-        builder: (context, state) => const HistoryDetailView(),
+        builder: (context, state) {
+          final record = state.extra as ScanRecord;
+          return HistoryDetailView(record: record);
+        },
       ),
       GoRoute(
         path: AppRoutes.scanner,
