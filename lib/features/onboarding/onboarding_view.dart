@@ -221,7 +221,6 @@ class _OnboardingViewState extends State<OnboardingView>
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
-                // TODO: open privacy policy
               },
           ),
           const TextSpan(text: ' · '),
@@ -235,7 +234,6 @@ class _OnboardingViewState extends State<OnboardingView>
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
-                // TODO: open terms of service
               },
           ),
         ],

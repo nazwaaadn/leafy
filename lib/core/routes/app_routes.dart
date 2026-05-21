@@ -5,6 +5,7 @@ import '../../features/auth/login/login_view.dart';
 import '../../features/auth/register/register_view.dart';
 import '../../features/home/home_view.dart';
 import '../../features/history/history_view.dart';
+import '../../features/history/detail/detail_history_view.dart';
 import '../../features/scanner/scanner_view.dart';
 import '../../features/scanner/detection_controller.dart';
 import '../../features/result/result_view.dart';
@@ -40,6 +41,10 @@ GoRouter createAppRouter({required bool isLoggedIn}) {
         builder: (context, state) => const HistoryView(),
       ),
       GoRoute(
+        path: AppRoutes.historyDetail,
+        builder: (context, state) => const HistoryDetailView(),
+      ),
+      GoRoute(
         path: AppRoutes.scanner,
         builder: (context, state) => ScannerView(
           controller: DetectionController(
@@ -65,6 +70,7 @@ class AppRoutes {
   static const register = '/register';
   static const home = '/home';
   static const history = '/history';
+  static const historyDetail = '/history-detail';
   static const scanner = '/scanner';
   static const result = '/result';
 }
