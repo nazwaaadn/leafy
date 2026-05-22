@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 import 'package:leafy_app/core/routes/app_routes.dart';
 import 'package:leafy_app/data/models/user_model.dart';
 import 'package:leafy_app/data/services/session_service.dart';
+import 'package:leafy_app/data/services/mongo_service.dart';
+import 'package:leafy_app/data/services/connectivity_service.dart';
+import 'package:leafy_app/data/models/detection_result.dart';
 
 class HomeController {
   final SessionService _sessionService = SessionService();
-  final int healthyCount = 127;
-  final int sickCount = 10;
-  final String syncStatus = "Semua data aman";
+  final MongoService _mongo = MongoService();
+  final ConnectivityService _connectivity = ConnectivityService();
+
+  final ValueNotifier<int> healthyCount = ValueNotifier<int>(0);
+  final ValueNotifier<int> sickCount = ValueNotifier<int>(0);
+  final ValueNotifier<bool> statsLoading = ValueNotifier<bool>(false);
+  final ValueNotifier<String> syncStatus =
+      ValueNotifier<String>('Memuat data...');
 
   UserModel? get currentUser => _sessionService.currentUser;
 
@@ -33,5 +42,72 @@ class HomeController {
     if (context.mounted) {
       context.go('/login');
     }
+  }
+
+  Future<void> loadStats() async {
+    if (_connectivity.isOffline) {
+      syncStatus.value = 'Offline — data lokal';
+      _loadStatsFromHive();
+      return;
+    }
+
+    statsLoading.value = true;
+    syncStatus.value = 'Menyinkronkan...';
+
+    try {
+      final stats = await _mongo.getDetectionStats(
+        userId: currentUser?.id,
+      );
+
+      if (stats.healthy == -1) {
+        _loadStatsFromHive();
+        syncStatus.value = 'Data lokal (gagal sinkron)';
+      } else {
+        healthyCount.value = stats.healthy;
+        sickCount.value = stats.sick;
+        syncStatus.value = 'Semua data aman';
+      }
+    } catch (_) {
+      _loadStatsFromHive();
+      syncStatus.value = 'Data lokal (offline)';
+    } finally {
+      statsLoading.value = false;
+    }
+  }
+
+  void _loadStatsFromHive() {
+    try {
+      if (!Hive.isBoxOpen('detections')) {
+        healthyCount.value = 0;
+        sickCount.value = 0;
+        return;
+      }
+
+      final box = Hive.box<DetectionResult>('detections');
+      int h = 0;
+      int s = 0;
+
+      for (final item in box.values) {
+        final label = item.label.toLowerCase();
+        if (label.contains('healthy')) {
+          h++;
+        } else {
+          s++;
+        }
+      }
+
+      healthyCount.value = h;
+      sickCount.value = s;
+    } catch (_) {
+      healthyCount.value = 0;
+      sickCount.value = 0;
+    }
+  }
+
+  void dispose() {
+    healthyCount.dispose();
+    sickCount.dispose();
+    statsLoading.dispose();
+    syncStatus.dispose();
   }
 }

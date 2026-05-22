@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
+import 'package:leafy_app/data/models/detection_result.dart';
+import 'package:leafy_app/data/services/connectivity_service.dart';
+import 'package:leafy_app/data/services/mongo_service.dart';
+import 'package:leafy_app/data/services/session_service.dart';
 
 enum SyncStatus { local, synced }
 
@@ -24,6 +29,10 @@ class ScanRecord {
 }
 
 class HistoryController extends GetxController {
+  final MongoService _mongo = MongoService();
+  final ConnectivityService _connectivity = ConnectivityService();
+  final SessionService _session = SessionService();
+
   final Rx<DateTime> activeMonth = DateTime(
     DateTime.now().year,
     DateTime.now().month,
@@ -32,125 +41,137 @@ class HistoryController extends GetxController {
   final Rx<DateTime> selectedDate = DateTime.now().obs;
   final ScrollController calendarScrollController = ScrollController();
 
-  final Map<String, List<ScanRecord>> _dummyData = _buildDummyData();
+  final RxMap<String, List<ScanRecord>> _scanData =
+      <String, List<ScanRecord>>{}.obs;
 
-  static Map<String, List<ScanRecord>> _buildDummyData() {
-    final now = DateTime.now();
-    return {
-      _fmt(DateTime(now.year, now.month, 1)): [
-        const ScanRecord(
-          logId: '#3001',
-          conditionName: 'Sehat',
-          time: '07:30',
-          accuracyPercent: 96,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(DateTime(now.year, now.month, 3)): [
-        const ScanRecord(
-          logId: '#3100',
-          conditionName: 'Bercak Daun Kuning',
-          time: '09:15',
-          accuracyPercent: 82,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#3101',
-          conditionName: 'Sehat',
-          time: '14:00',
-          accuracyPercent: 94,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(now): [
-        const ScanRecord(
-          logId: '#3500',
-          conditionName: 'Sehat',
-          time: '09:15',
-          accuracyPercent: 98,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(now.subtract(const Duration(days: 2))): [
-        const ScanRecord(
-          logId: '#3461',
-          conditionName: 'Bercak Daun Kuning',
-          time: '10:00',
-          accuracyPercent: 85,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#3462',
-          conditionName: 'Bercak Daun Kuning',
-          time: '11:20',
-          accuracyPercent: 80,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#3460',
-          conditionName: 'Sehat',
-          time: '08:05',
-          accuracyPercent: 97,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(now.subtract(const Duration(days: 4))): [
-        const ScanRecord(
-          logId: '#2816',
-          conditionName: 'Bercak Daun Kuning',
-          time: '10:00',
-          accuracyPercent: 85,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#213',
-          conditionName: 'Sehat',
-          time: '13:41',
-          accuracyPercent: 95,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(DateTime(now.year, now.month - 1, 5)): [
-        const ScanRecord(
-          logId: '#2100',
-          conditionName: 'Karat Daun',
-          time: '08:45',
-          accuracyPercent: 88,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.diseased,
-        ),
-      ],
-      _fmt(DateTime(now.year, now.month - 1, 14)): [
-        const ScanRecord(
-          logId: '#2200',
-          conditionName: 'Sehat',
-          time: '10:30',
-          accuracyPercent: 99,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-        const ScanRecord(
-          logId: '#2201',
-          conditionName: 'Bercak Daun Kuning',
-          time: '15:00',
-          accuracyPercent: 79,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.diseased,
-        ),
-      ],
-    };
+  final RxBool isLoading = false.obs;
+  final RxBool hasError = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadData();
   }
 
-    int get daysInActiveMonth {
+  Future<void> _loadData() async {
+    isLoading.value = true;
+    hasError.value = false;
+
+    try {
+      if (_connectivity.isOffline) {
+        _loadFromHive();
+      } else {
+        await _loadFromMongo();
+      }
+    } catch (e) {
+      print('[HistoryController] load error: $e');
+      hasError.value = true;
+      _loadFromHive();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadFromMongo() async {
+    final grouped = await _mongo.getDetectionsGroupedByDate(
+      userId: _session.currentUser?.id,
+    );
+
+    if (grouped.isEmpty) {
+      _loadFromHive();
+      return;
+    }
+
+    final Map<String, List<ScanRecord>> result = {};
+    grouped.forEach((dateKey, docs) {
+      result[dateKey] = docs.map(_mongoDocToScanRecord).toList();
+    });
+
+    _scanData.value = result;
+  }
+
+  void _loadFromHive() {
+    try {
+      if (!Hive.isBoxOpen('detections')) {
+        _scanData.value = {};
+        return;
+      }
+
+      final box = Hive.box<DetectionResult>('detections');
+      final Map<String, List<ScanRecord>> result = {};
+
+      for (final item in box.values) {
+        final dateKey = _fmt(item.detectedAt.toLocal());
+        final record = _detectionResultToScanRecord(item);
+        result.putIfAbsent(dateKey, () => []).add(record);
+      }
+
+      for (final key in result.keys) {
+        result[key]!.sort((a, b) => b.time.compareTo(a.time));
+      }
+
+      _scanData.value = result;
+    } catch (e) {
+      print('[HistoryController] Hive fallback error: $e');
+      _scanData.value = {};
+    }
+  }
+
+  ScanRecord _mongoDocToScanRecord(Map<String, dynamic> doc) {
+    final label = (doc['label'] ?? '').toString();
+    final confidence = (doc['confidence'] ?? 0.0) as num;
+    final rawDate = doc['detectedAt']?.toString() ?? '';
+    final dt = DateTime.tryParse(rawDate)?.toLocal() ?? DateTime.now();
+    final isSynced = doc['isSynced'] == true;
+
+    return ScanRecord(
+      logId: _shortId(doc['_id']?.toString() ?? ''),
+      conditionName: _labelToConditionName(label),
+      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      accuracyPercent: (confidence * 100).round().clamp(0, 100),
+      syncStatus: isSynced ? SyncStatus.synced : SyncStatus.local,
+      healthStatus: label.toLowerCase().contains('healthy')
+          ? HealthStatus.healthy
+          : HealthStatus.diseased,
+    );
+  }
+
+  ScanRecord _detectionResultToScanRecord(DetectionResult item) {
+    final dt = item.detectedAt.toLocal();
+    return ScanRecord(
+      logId: _shortId(item.id),
+      conditionName: _labelToConditionName(item.label),
+      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      accuracyPercent: (item.confidence * 100).round().clamp(0, 100),
+      syncStatus: item.isSynced ? SyncStatus.synced : SyncStatus.local,
+      healthStatus: item.label.toLowerCase().contains('healthy')
+          ? HealthStatus.healthy
+          : HealthStatus.diseased,
+    );
+  }
+
+  String _shortId(String id) {
+    if (id.isEmpty) return '#???';
+    final clean = id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    return '#${clean.substring(0, clean.length.clamp(0, 6)).toUpperCase()}';
+  }
+
+  String _labelToConditionName(String label) {
+    if (label.toLowerCase().contains('healthy')) return 'Sehat';
+
+    final words = label
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .trim()
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+        .toList();
+
+    return words.join(' ');
+  }
+
+  int get daysInActiveMonth {
     final m = activeMonth.value;
     return DateTime(m.year, m.month + 1, 0).day;
   }
@@ -182,7 +203,7 @@ class HistoryController extends GetxController {
   }
 
   List<ScanRecord> get recordsForSelectedDate {
-    return _dummyData[_fmt(selectedDate.value)] ?? [];
+    return _scanData[_fmt(selectedDate.value)] ?? [];
   }
 
   void selectDate(DateTime date) {
@@ -191,7 +212,7 @@ class HistoryController extends GetxController {
 
   bool isSelected(DateTime date) => _fmt(date) == _fmt(selectedDate.value);
 
-  bool hasData(DateTime date) => _dummyData.containsKey(_fmt(date));
+  bool hasData(DateTime date) => _scanData.containsKey(_fmt(date));
 
   String dayName(DateTime date) {
     const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
