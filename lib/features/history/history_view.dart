@@ -389,17 +389,7 @@ class HistoryView extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Detail belum tersedia'),
-                backgroundColor: const Color(0xFF4A3728),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                margin: const EdgeInsets.all(16),
-                duration: const Duration(seconds: 2),
-              ),
-            );
+            context.push('/history-detail', extra: record);
           },
           child: Container(
             decoration: BoxDecoration(
