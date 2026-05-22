@@ -29,6 +29,7 @@ class DetectionItem {
     final y1 = (box[1] as num).toDouble() / imageHeight;
     final x2 = (box[2] as num).toDouble() / imageWidth;
     final y2 = (box[3] as num).toDouble() / imageHeight;
+    final confidence = (box[4] as num).toDouble();
 
     return DetectionItem(
       box: Rect.fromLTRB(
@@ -38,7 +39,7 @@ class DetectionItem {
         y2.clamp(0.0, 1.0),
       ),
       label: raw['tag'] as String? ?? 'Unknown',
-      confidence: (raw['confidence'] as num?)?.toDouble() ?? 0.0,
+      confidence: confidence,
     );
   }
 }

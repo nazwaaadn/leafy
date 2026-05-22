@@ -126,6 +126,12 @@ class _ScannerViewState extends State<ScannerView> {
         ),
 
         IconButton(
+          icon: const Icon(Icons.image, color: Colors.white),
+          onPressed: _ctrl.pickAndDetect,
+          tooltip: 'Pilih dari Galeri',
+        ),
+
+        IconButton(
           icon: const Icon(Icons.history, color: Colors.white),
           onPressed: _showHistory,
           tooltip: 'Riwayat',
