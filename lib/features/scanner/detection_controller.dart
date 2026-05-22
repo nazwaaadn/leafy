@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/models/detection_item.dart';
@@ -93,6 +94,7 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
           imageWidth: image.width,
           imageHeight: image.height,
         );
+        print("DEBUG_DETECTION: Raw live output from YOLO model: $raw");
         currentDetections = raw
             .map(
               (r) => DetectionItem.fromRaw(
@@ -139,6 +141,7 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
         imageWidth: decoded.width,
         imageHeight: decoded.height,
       );
+      print("DEBUG_DETECTION: Raw file capture output from YOLO model: $raw");
 
       currentDetections = raw
           .map(
@@ -155,6 +158,51 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
       await _saveToHive(imagePath: xFile.path);
     } catch (e) {
       errorMessage = 'Deteksi gagal: $e';
+      scanState = ScanState.error;
+    }
+    notifyListeners();
+  }
+
+  Future<void> pickAndDetect() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+
+      scanState = ScanState.detecting;
+      currentDetections = [];
+      capturedImagePath = image.path;
+      
+      if (mode == ScanMode.live) {
+        await _stopLiveStream();
+      }
+      notifyListeners();
+
+      final imageBytes = await File(image.path).readAsBytes();
+      final decoded = await decodeImageFromList(imageBytes);
+
+      final raw = await _mlService.detectFromFile(
+        imagePath: image.path,
+        imageWidth: decoded.width,
+        imageHeight: decoded.height,
+      );
+      print("DEBUG_DETECTION: Raw gallery upload output from YOLO model: $raw");
+
+      currentDetections = raw
+          .map(
+            (r) => DetectionItem.fromRaw(
+              raw: r,
+              imageWidth: decoded.width,
+              imageHeight: decoded.height,
+            ),
+          )
+          .toList();
+
+      scanState = ScanState.done;
+
+      await _saveToHive(imagePath: image.path);
+    } catch (e) {
+      errorMessage = 'Upload gagal: $e';
       scanState = ScanState.error;
     }
     notifyListeners();

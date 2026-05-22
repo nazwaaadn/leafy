@@ -11,10 +11,16 @@ class ResultView extends StatefulWidget {
 }
 
 class _ResultViewState extends State<ResultView> {
-  final ResultController _controller = ResultController();
+  late final ResultController _controller;
   final Color primaryBrown = const Color(0xFF6D4C41);
   final Color accentBrown = const Color(0xFF4E342E);
   final Color bgColor = const Color(0xFFD7D3C1);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ResultController(widget.detections);
+  }
 
   @override
   Widget build(BuildContext context) {
