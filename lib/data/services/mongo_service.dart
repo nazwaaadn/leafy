@@ -65,6 +65,7 @@ class MongoService {
       'confidence': result.confidence,
       'imagePath': result.imagePath,
       'detectedAt': result.detectedAt.toIso8601String(),
+      'isSynced': true,
     });
   }
 
@@ -75,24 +76,66 @@ class MongoService {
         .toList();
   }
 
-  // ─── ScanHistoryRecord (history yang ditampilkan di app) ─────────────────────
-  /// Upload satu ScanHistoryRecord ke MongoDB (upsert by _id).
-  /// Dipanggil SyncService saat device kembali online.
-  Future<void> insertScanHistory(ScanHistoryRecord record) async {
-    final col = await _getCollection('scan_history');
-    await col.replaceOne(
-      where.eq('_id', record.id),
-      {
-        '_id': record.id,
-        'conditionName': record.conditionName,
-        'accuracyPercent': record.accuracyPercent,
-        'isHealthy': record.isHealthy,
-        'scannedAt': record.scannedAt.toIso8601String(),
-        'syncedAt': DateTime.now().toIso8601String(),
-      },
-      upsert: true,
-    );
+  Future<Map<String, List<Map<String, dynamic>>>> getDetectionsGroupedByDate({
+    String? userId,
+  }) async {
+    try {
+      final col = await _getCollection('detections');
+
+      final SelectorBuilder query = userId != null
+          ? where.eq('userId', userId).sortBy('detectedAt', descending: true)
+          : where.exists('_id').sortBy('detectedAt', descending: true);
+
+      final docs = await col.find(query).toList();
+
+      final Map<String, List<Map<String, dynamic>>> grouped = {};
+      for (final doc in docs) {
+        final raw = doc['detectedAt']?.toString() ?? '';
+        final dt = DateTime.tryParse(raw)?.toLocal();
+        if (dt == null) continue;
+        final key = _fmtDate(dt);
+        grouped.putIfAbsent(key, () => []).add(doc);
+      }
+
+      return grouped;
+    } catch (e) {
+      print('[MongoService] getDetectionsGroupedByDate error: $e');
+      return {};
+    }
   }
+
+  Future<({int healthy, int sick})> getDetectionStats({
+    String? userId,
+  }) async {
+    try {
+      final col = await _getCollection('detections');
+
+      final SelectorBuilder baseQuery =
+          userId != null ? where.eq('userId', userId) : where.exists('_id');
+
+      final allDocs = await col.find(baseQuery).toList();
+
+      int healthy = 0;
+      int sick = 0;
+
+      for (final doc in allDocs) {
+        final label = (doc['label'] ?? '').toString().toLowerCase();
+        if (label.contains('healthy')) {
+          healthy++;
+        } else {
+          sick++;
+        }
+      }
+
+      return (healthy: healthy, sick: sick);
+    } catch (e) {
+      print('[MongoService] getDetectionStats error: $e');
+      return (healthy: -1, sick: -1);
+    }
+  }
+
+  static String _fmtDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   Future<void> close() async {
     await _db?.close();

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../data/models/scan_history_record.dart';
-import '../../data/services/history_service.dart';
-import '../../data/services/sync_service.dart';
-
-// Re-export tipe agar history_view.dart tidak perlu berubah banyak
-export '../../data/models/scan_history_record.dart';
+import 'package:hive/hive.dart';
+import 'package:leafy_app/data/models/detection_result.dart';
+import 'package:leafy_app/data/services/connectivity_service.dart';
+import 'package:leafy_app/data/services/mongo_service.dart';
+import 'package:leafy_app/data/services/session_service.dart';
 
 enum SyncStatus { local, synced }
 
@@ -43,6 +42,10 @@ class ScanRecord {
 }
 
 class HistoryController extends GetxController {
+  final MongoService _mongo = MongoService();
+  final ConnectivityService _connectivity = ConnectivityService();
+  final SessionService _session = SessionService();
+
   final Rx<DateTime> activeMonth = DateTime(
     DateTime.now().year,
     DateTime.now().month,
@@ -51,30 +54,135 @@ class HistoryController extends GetxController {
   final Rx<DateTime> selectedDate = DateTime.now().obs;
   final ScrollController calendarScrollController = ScrollController();
 
-  final _historyService = HistoryService();
+  final RxMap<String, List<ScanRecord>> _scanData =
+      <String, List<ScanRecord>>{}.obs;
 
-  /// Cache semua record dari Hive — direfresh setiap kali controller diaktifkan
-  final RxList<ScanHistoryRecord> _allRecords = <ScanHistoryRecord>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxBool hasError = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _loadRecords();
-    // Saat SyncService berhasil sync ke MongoDB → refresh UI otomatis
-    SyncService().onSyncComplete = refreshHistory;
+    _loadData();
   }
 
-  /// Muat ulang dari Hive (dipanggil saat controller init & setelah save)
-  void _loadRecords() {
-    _allRecords.value = _historyService.getAll();
-    pendingCount.value = _historyService.pendingCount;
+  Future<void> _loadData() async {
+    isLoading.value = true;
+    hasError.value = false;
+
+    try {
+      if (_connectivity.isOffline) {
+        _loadFromHive();
+      } else {
+        await _loadFromMongo();
+      }
+    } catch (e) {
+      print('[HistoryController] load error: $e');
+      hasError.value = true;
+      _loadFromHive();
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  /// Panggil ini setelah kembali dari halaman result agar list diperbarui
-  void refreshHistory() => _loadRecords();
+  Future<void> _loadFromMongo() async {
+    final grouped = await _mongo.getDetectionsGroupedByDate(
+      userId: _session.currentUser?.id,
+    );
 
-  /// Jumlah scan yang belum tersinkronisasi ke server (reaktif → Obx)
-  final RxInt pendingCount = 0.obs;
+    if (grouped.isEmpty) {
+      _loadFromHive();
+      return;
+    }
+
+    final Map<String, List<ScanRecord>> result = {};
+    grouped.forEach((dateKey, docs) {
+      result[dateKey] = docs.map(_mongoDocToScanRecord).toList();
+    });
+
+    _scanData.value = result;
+  }
+
+  void _loadFromHive() {
+    try {
+      if (!Hive.isBoxOpen('detections')) {
+        _scanData.value = {};
+        return;
+      }
+
+      final box = Hive.box<DetectionResult>('detections');
+      final Map<String, List<ScanRecord>> result = {};
+
+      for (final item in box.values) {
+        final dateKey = _fmt(item.detectedAt.toLocal());
+        final record = _detectionResultToScanRecord(item);
+        result.putIfAbsent(dateKey, () => []).add(record);
+      }
+
+      for (final key in result.keys) {
+        result[key]!.sort((a, b) => b.time.compareTo(a.time));
+      }
+
+      _scanData.value = result;
+    } catch (e) {
+      print('[HistoryController] Hive fallback error: $e');
+      _scanData.value = {};
+    }
+  }
+
+  ScanRecord _mongoDocToScanRecord(Map<String, dynamic> doc) {
+    final label = (doc['label'] ?? '').toString();
+    final confidence = (doc['confidence'] ?? 0.0) as num;
+    final rawDate = doc['detectedAt']?.toString() ?? '';
+    final dt = DateTime.tryParse(rawDate)?.toLocal() ?? DateTime.now();
+    final isSynced = doc['isSynced'] == true;
+
+    return ScanRecord(
+      logId: _shortId(doc['_id']?.toString() ?? ''),
+      conditionName: _labelToConditionName(label),
+      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      accuracyPercent: (confidence * 100).round().clamp(0, 100),
+      syncStatus: isSynced ? SyncStatus.synced : SyncStatus.local,
+      healthStatus: label.toLowerCase().contains('healthy')
+          ? HealthStatus.healthy
+          : HealthStatus.diseased,
+    );
+  }
+
+  ScanRecord _detectionResultToScanRecord(DetectionResult item) {
+    final dt = item.detectedAt.toLocal();
+    return ScanRecord(
+      logId: _shortId(item.id),
+      conditionName: _labelToConditionName(item.label),
+      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      accuracyPercent: (item.confidence * 100).round().clamp(0, 100),
+      syncStatus: item.isSynced ? SyncStatus.synced : SyncStatus.local,
+      healthStatus: item.label.toLowerCase().contains('healthy')
+          ? HealthStatus.healthy
+          : HealthStatus.diseased,
+    );
+  }
+
+  String _shortId(String id) {
+    if (id.isEmpty) return '#???';
+    final clean = id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    return '#${clean.substring(0, clean.length.clamp(0, 6)).toUpperCase()}';
+  }
+
+  String _labelToConditionName(String label) {
+    if (label.toLowerCase().contains('healthy')) return 'Sehat';
+
+    final words = label
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .trim()
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+        .toList();
+
+    return words.join(' ');
+  }
 
   int get daysInActiveMonth {
     final m = activeMonth.value;
@@ -110,12 +218,7 @@ class HistoryController extends GetxController {
   /// Ambil records untuk tanggal yang dipilih sebagai [ScanRecord] agar
   /// history_view.dart tetap kompatibel
   List<ScanRecord> get recordsForSelectedDate {
-    final key = _fmt(selectedDate.value);
-    return _allRecords
-        .where((r) => r.dateKey == key)
-        .map((r) => ScanRecord.fromHive(r))
-        .toList()
-      ..sort((a, b) => a.time.compareTo(b.time));
+    return _scanData[_fmt(selectedDate.value)] ?? [];
   }
 
   void selectDate(DateTime date) {
@@ -124,10 +227,7 @@ class HistoryController extends GetxController {
 
   bool isSelected(DateTime date) => _fmt(date) == _fmt(selectedDate.value);
 
-  bool hasData(DateTime date) {
-    final key = _fmt(date);
-    return _allRecords.any((r) => r.dateKey == key);
-  }
+  bool hasData(DateTime date) => _scanData.containsKey(_fmt(date));
 
   String dayName(DateTime date) {
     const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];

@@ -13,6 +13,18 @@ class _HomeViewState extends State<HomeView> {
   final HomeController _controller = HomeController();
 
   @override
+  void initState() {
+    super.initState();
+    _controller.loadStats();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -131,11 +143,16 @@ class _HomeViewState extends State<HomeView> {
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.1)),
-                    Text(_controller.syncStatus,
+                    ValueListenableBuilder<String>(
+                      valueListenable: _controller.syncStatus,
+                      builder: (_, status, __) => Text(
+                        status,
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 15,
-                            fontWeight: FontWeight.w600)),
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
                   ],
                 )
               ],
@@ -184,16 +201,30 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildStatisticsGrid() {
     return Row(
       children: [
-        _buildStatCard("Daun Sehat", _controller.healthyCount.toString(),
-            Icons.check_circle_outline, const Color(0xFF2E7D32)),
+        ValueListenableBuilder<int>(
+          valueListenable: _controller.healthyCount,
+          builder: (_, count, __) => _buildStatCard(
+            "Daun Sehat",
+            count,
+            Icons.check_circle_outline,
+            const Color(0xFF2E7D32),
+          ),
+        ),
         const SizedBox(width: 15),
-        _buildStatCard("Terindikasi Sakit", _controller.sickCount.toString(),
-            Icons.warning_amber_rounded, const Color(0xFFC62828)),
+        ValueListenableBuilder<int>(
+          valueListenable: _controller.sickCount,
+          builder: (_, count, __) => _buildStatCard(
+            "Terindikasi Sakit",
+            count,
+            Icons.warning_amber_rounded,
+            const Color(0xFFC62828),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(String label, int value, IconData icon, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -224,11 +255,28 @@ class _HomeViewState extends State<HomeView> {
               ],
             ),
             const SizedBox(height: 15),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 38,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4E342E))),
+            ValueListenableBuilder<bool>(
+              valueListenable: _controller.statsLoading,
+              builder: (_, loading, __) {
+                if (loading) {
+                  return SizedBox(
+                    height: 38,
+                    width: 38,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: color,
+                    ),
+                  );
+                }
+                return Text(
+                  value.toString(),
+                  style: const TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4E342E)),
+                );
+              },
+            ),
           ],
         ),
       ),
