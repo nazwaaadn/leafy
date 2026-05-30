@@ -7,6 +7,7 @@ import 'package:leafy_app/data/services/hive_service.dart';
 import 'package:leafy_app/data/services/session_service.dart';
 import 'package:leafy_app/data/services/sync_service.dart';
 import 'package:leafy_app/data/repositories/detection_repository.dart';
+import 'package:leafy_app/data/services/history_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,7 @@ void main() async {
   await SessionService().init();
   await ConnectivityService().init();
   await DetectionRepository.openBox();
+  await HistoryService.openBox();
   SyncService().init();
 
   runApp(const LeafyApp());

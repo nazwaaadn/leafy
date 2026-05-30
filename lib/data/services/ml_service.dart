@@ -34,7 +34,7 @@ class MlService {
     required String imagePath,
     required int imageWidth,
     required int imageHeight,
-    double confidenceThreshold = 0.10,
+    double confidenceThreshold = 0.40,
     double iouThreshold = 0.45,
   }) async {
     if (!_isLoaded) {
@@ -55,7 +55,7 @@ class MlService {
     required List<Uint8List> bytesList,
     required int imageWidth,
     required int imageHeight,
-    double confidenceThreshold = 0.10,
+    double confidenceThreshold = 0.40,
     double iouThreshold = 0.45,
   }) async {
     if (!_isLoaded) {

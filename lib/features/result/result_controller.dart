@@ -1,4 +1,8 @@
+import 'package:uuid/uuid.dart';
 import '../../data/models/detection_item.dart';
+import '../../data/models/scan_history_record.dart';
+import '../../data/services/history_service.dart';
+import '../../data/services/sync_service.dart';
 
 class DiseaseReport {
   final String label;
@@ -9,7 +13,6 @@ class DiseaseReport {
   final String severity;
   final String analysisDescription;
   final List<String> recommendations;
-  final bool isAlternative;
 
   DiseaseReport({
     required this.label,
@@ -20,48 +23,12 @@ class DiseaseReport {
     required this.severity,
     required this.analysisDescription,
     required this.recommendations,
-    this.isAlternative = false,
   });
 }
 
 class ResultController {
   List<DiseaseReport> reports = [];
 
-  static const List<String> _cassavaLabels = [
-    'Cassava Bacterial Blight',
-    'Cassava Brown Leaf Spot',
-    'Cassava Healthy',
-    'Cassava Mosaic',
-    'Cassava Root Rot',
-  ];
-
-  static const List<String> _cornLabels = [
-    'Corn Brown Spots',
-    'Corn Charcoal',
-    'Corn Chlorotic Leaf Spot',
-    'Corn Gray leaf spot',
-    'Corn Healthy',
-    'Corn Insects Damages',
-    'Corn Mildew',
-    'Corn Purple Discoloration',
-    'Corn Smut',
-    'Corn Streak',
-    'Corn Stripe',
-    'Corn Violet Decoloration',
-    'Corn Yellow Spots',
-    'Corn Yellowing',
-    'Corn leaf blight',
-    'Corn rust leaf',
-  ];
-
-  static const List<String> _tomatoLabels = [
-    'Tomato Brown Spots',
-    'Tomato bacterial wilt',
-    'Tomato blight leaf',
-    'Tomato healthy',
-    'Tomato leaf mosaic virus',
-    'Tomato leaf yellow virus',
-  ];
 
   // Properti kompatibilitas untuk data terbaik (indeks 0)
   String get diseaseName => reports.isNotEmpty ? reports[0].diseaseName : "Tidak Diketahui";
@@ -88,32 +55,13 @@ class ResultController {
         final label = entry.key;
         final confidence = entry.value;
         final accuracyPercent = double.parse((confidence * 100).toStringAsFixed(1));
-        
         reports.add(_createReportForLabel(label, accuracyPercent));
       }
-      
-      // Urutkan laporan dari akurasi tertinggi ke terendah
+
+      // Urutkan dari akurasi tertinggi ke terendah, lalu ambil MAKS 3 teratas
       reports.sort((a, b) => b.accuracy.compareTo(a.accuracy));
-
-      // Dapatkan label utama untuk mendeteksi jenis tanaman
-      final primaryLabel = reports[0].label.toLowerCase();
-      List<String> cropLabels = [];
-      if (primaryLabel.contains('cassava')) {
-        cropLabels = _cassavaLabels;
-      } else if (primaryLabel.contains('corn')) {
-        cropLabels = _cornLabels;
-      } else if (primaryLabel.contains('tomato')) {
-        cropLabels = _tomatoLabels;
-      }
-
-      // Cari label tanaman sejenis yang TIDAK terdeteksi untuk ditambahkan sebagai alternatif
-      for (var fullLabelName in cropLabels) {
-        final isAlreadyDetected = labelMaxConfidence.keys.any(
-          (k) => k.toLowerCase() == fullLabelName.toLowerCase()
-        );
-        if (!isAlreadyDetected) {
-          reports.add(_createReportForLabel(fullLabelName, 0.0, isAlternative: true));
-        }
+      if (reports.length > 3) {
+        reports = reports.sublist(0, 3);
       }
     } else {
       // Jika tidak ada deteksi sama sekali
@@ -134,7 +82,7 @@ class ResultController {
     }
   }
 
-  DiseaseReport _createReportForLabel(String rawLabel, double accuracyPercent, {bool isAlternative = false}) {
+  DiseaseReport _createReportForLabel(String rawLabel, double accuracyPercent) {
     final label = rawLabel.toLowerCase();
     String diseaseName = "Tidak Diketahui";
     String scientificName = "($rawLabel)";
@@ -218,11 +166,28 @@ class ResultController {
       severity: severity,
       analysisDescription: analysisDescription,
       recommendations: recommendations,
-      isAlternative: isAlternative,
     );
   }
 
-  void saveToHistory() {
-    print("Data disimpan ke riwayat...");
+  /// Simpan hasil diagnosa utama (reports[0]) ke Hive history (offline-first).
+  /// Setelah tersimpan, langsung coba sync ke MongoDB jika online.
+  /// Mengembalikan [true] jika berhasil disimpan ke Hive, [false] jika tidak ada data.
+  Future<bool> saveToHistory() async {
+    if (reports.isEmpty) return false;
+    final primary = reports[0];
+    final record = ScanHistoryRecord(
+      id: const Uuid().v4(),
+      conditionName: primary.diseaseName,
+      accuracyPercent: primary.accuracy,
+      isHealthy: primary.status.toLowerCase().contains('sehat') ||
+          primary.status.toLowerCase().contains('bebas'),
+      isSynced: false, // selalu mulai sebagai pending
+      scannedAt: DateTime.now(),
+    );
+    // 1. Simpan lokal dulu (offline-first) — selalu berhasil selama Hive buka
+    await HistoryService().save(record);
+    // 2. Langsung coba upload ke MongoDB (jika offline, akan di-skip dan retry otomatis)
+    SyncService().trySyncPending();
+    return true;
   }
 }

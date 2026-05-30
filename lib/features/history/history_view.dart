@@ -17,6 +17,38 @@ class HistoryView extends StatelessWidget {
         children: [
           _buildMonthHeader(controller),
           _buildCalendar(controller),
+          // Banner "Menunggu Sinkronisasi" — hanya muncul jika ada pending
+          Obx(() {
+            final pending = controller.pendingCount.value;
+            if (pending == 0) return const SizedBox.shrink();
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFFCA28), width: 1),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.cloud_off_rounded,
+                      color: Color(0xFFF57F17), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$pending scan menunggu sinkronisasi ke server',
+                      style: const TextStyle(
+                        color: Color(0xFF5D4037),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
           const SizedBox(height: 4),
           Expanded(
             child: Obx(() {
@@ -182,8 +214,8 @@ class HistoryView extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: isActive
-                                  ? const Color(0xFF6B3A2A).withOpacity(0.3)
-                                  : Colors.black.withOpacity(0.06),
+                                  ? const Color(0xFF6B3A2A).withValues(alpha: 0.3)
+                                  : Colors.black.withValues(alpha: 0.06),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -242,7 +274,7 @@ class HistoryView extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    const Color(0xFF6B3A2A).withOpacity(0.15),
+                    const Color(0xFF6B3A2A).withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -281,7 +313,7 @@ class HistoryView extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -294,7 +326,7 @@ class HistoryView extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A7C3F).withOpacity(0.1),
+                  color: const Color(0xFF4A7C3F).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -374,8 +406,8 @@ class HistoryView extends StatelessWidget {
     final Color accentColor =
         isHealthy ? const Color(0xFF4A7C3F) : const Color(0xFFE65100);
     final Color bgColor = isHealthy
-        ? const Color(0xFF4A7C3F).withOpacity(0.1)
-        : const Color(0xFFE65100).withOpacity(0.1);
+        ? const Color(0xFF4A7C3F).withValues(alpha: 0.1)
+        : const Color(0xFFE65100).withValues(alpha: 0.1);
     final IconData statusIcon = isHealthy
         ? Icons.check_circle_outline_rounded
         : Icons.warning_amber_rounded;
@@ -406,7 +438,7 @@ class HistoryView extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -585,7 +617,7 @@ class HistoryView extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),

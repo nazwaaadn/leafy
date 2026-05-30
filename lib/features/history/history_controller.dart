@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../data/models/scan_history_record.dart';
+import '../../data/services/history_service.dart';
+import '../../data/services/sync_service.dart';
+
+// Re-export tipe agar history_view.dart tidak perlu berubah banyak
+export '../../data/models/scan_history_record.dart';
 
 enum SyncStatus { local, synced }
 
 enum HealthStatus { healthy, diseased }
 
+/// Wrapper ringan agar history_view.dart tetap kompatibel
 class ScanRecord {
   final String logId;
   final String conditionName;
@@ -21,6 +28,18 @@ class ScanRecord {
     required this.syncStatus,
     required this.healthStatus,
   });
+
+  /// Konversi dari ScanHistoryRecord (Hive model)
+  factory ScanRecord.fromHive(ScanHistoryRecord r) {
+    return ScanRecord(
+      logId: '#${r.id.substring(0, 6).toUpperCase()}',
+      conditionName: r.conditionName,
+      time: r.timeLabel,
+      accuracyPercent: r.accuracyPercent.round(),
+      syncStatus: r.isSynced ? SyncStatus.synced : SyncStatus.local,
+      healthStatus: r.isHealthy ? HealthStatus.healthy : HealthStatus.diseased,
+    );
+  }
 }
 
 class HistoryController extends GetxController {
@@ -32,125 +51,32 @@ class HistoryController extends GetxController {
   final Rx<DateTime> selectedDate = DateTime.now().obs;
   final ScrollController calendarScrollController = ScrollController();
 
-  final Map<String, List<ScanRecord>> _dummyData = _buildDummyData();
+  final _historyService = HistoryService();
 
-  static Map<String, List<ScanRecord>> _buildDummyData() {
-    final now = DateTime.now();
-    return {
-      _fmt(DateTime(now.year, now.month, 1)): [
-        const ScanRecord(
-          logId: '#3001',
-          conditionName: 'Sehat',
-          time: '07:30',
-          accuracyPercent: 96,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(DateTime(now.year, now.month, 3)): [
-        const ScanRecord(
-          logId: '#3100',
-          conditionName: 'Bercak Daun Kuning',
-          time: '09:15',
-          accuracyPercent: 82,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#3101',
-          conditionName: 'Sehat',
-          time: '14:00',
-          accuracyPercent: 94,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(now): [
-        const ScanRecord(
-          logId: '#3500',
-          conditionName: 'Sehat',
-          time: '09:15',
-          accuracyPercent: 98,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(now.subtract(const Duration(days: 2))): [
-        const ScanRecord(
-          logId: '#3461',
-          conditionName: 'Bercak Daun Kuning',
-          time: '10:00',
-          accuracyPercent: 85,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#3462',
-          conditionName: 'Bercak Daun Kuning',
-          time: '11:20',
-          accuracyPercent: 80,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#3460',
-          conditionName: 'Sehat',
-          time: '08:05',
-          accuracyPercent: 97,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(now.subtract(const Duration(days: 4))): [
-        const ScanRecord(
-          logId: '#2816',
-          conditionName: 'Bercak Daun Kuning',
-          time: '10:00',
-          accuracyPercent: 85,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.diseased,
-        ),
-        const ScanRecord(
-          logId: '#213',
-          conditionName: 'Sehat',
-          time: '13:41',
-          accuracyPercent: 95,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-      ],
-      _fmt(DateTime(now.year, now.month - 1, 5)): [
-        const ScanRecord(
-          logId: '#2100',
-          conditionName: 'Karat Daun',
-          time: '08:45',
-          accuracyPercent: 88,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.diseased,
-        ),
-      ],
-      _fmt(DateTime(now.year, now.month - 1, 14)): [
-        const ScanRecord(
-          logId: '#2200',
-          conditionName: 'Sehat',
-          time: '10:30',
-          accuracyPercent: 99,
-          syncStatus: SyncStatus.synced,
-          healthStatus: HealthStatus.healthy,
-        ),
-        const ScanRecord(
-          logId: '#2201',
-          conditionName: 'Bercak Daun Kuning',
-          time: '15:00',
-          accuracyPercent: 79,
-          syncStatus: SyncStatus.local,
-          healthStatus: HealthStatus.diseased,
-        ),
-      ],
-    };
+  /// Cache semua record dari Hive — direfresh setiap kali controller diaktifkan
+  final RxList<ScanHistoryRecord> _allRecords = <ScanHistoryRecord>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadRecords();
+    // Saat SyncService berhasil sync ke MongoDB → refresh UI otomatis
+    SyncService().onSyncComplete = refreshHistory;
   }
 
-    int get daysInActiveMonth {
+  /// Muat ulang dari Hive (dipanggil saat controller init & setelah save)
+  void _loadRecords() {
+    _allRecords.value = _historyService.getAll();
+    pendingCount.value = _historyService.pendingCount;
+  }
+
+  /// Panggil ini setelah kembali dari halaman result agar list diperbarui
+  void refreshHistory() => _loadRecords();
+
+  /// Jumlah scan yang belum tersinkronisasi ke server (reaktif → Obx)
+  final RxInt pendingCount = 0.obs;
+
+  int get daysInActiveMonth {
     final m = activeMonth.value;
     return DateTime(m.year, m.month + 1, 0).day;
   }
@@ -181,8 +107,15 @@ class HistoryController extends GetxController {
     });
   }
 
+  /// Ambil records untuk tanggal yang dipilih sebagai [ScanRecord] agar
+  /// history_view.dart tetap kompatibel
   List<ScanRecord> get recordsForSelectedDate {
-    return _dummyData[_fmt(selectedDate.value)] ?? [];
+    final key = _fmt(selectedDate.value);
+    return _allRecords
+        .where((r) => r.dateKey == key)
+        .map((r) => ScanRecord.fromHive(r))
+        .toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
   }
 
   void selectDate(DateTime date) {
@@ -191,7 +124,10 @@ class HistoryController extends GetxController {
 
   bool isSelected(DateTime date) => _fmt(date) == _fmt(selectedDate.value);
 
-  bool hasData(DateTime date) => _dummyData.containsKey(_fmt(date));
+  bool hasData(DateTime date) {
+    final key = _fmt(date);
+    return _allRecords.any((r) => r.dateKey == key);
+  }
 
   String dayName(DateTime date) {
     const days = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
