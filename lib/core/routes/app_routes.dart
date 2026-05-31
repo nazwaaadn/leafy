@@ -74,7 +74,7 @@ class AppRoutes {
   static const register = '/register';
   static const home = '/home';
   static const history = '/history';
-  static const historyDetail = '/history-detail';
+  static const historyDetail = '/history/detail';
   static const scanner = '/scanner';
   static const result = '/result';
 }
