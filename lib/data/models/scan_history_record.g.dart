@@ -21,8 +21,10 @@ class ScanHistoryRecordAdapter extends TypeAdapter<ScanHistoryRecord> {
       id: fields[0] as String,
       conditionName: fields[1] as String,
       accuracyPercent: (fields[2] as num).toDouble(),
-      isHealthy: fields[3] as bool,
-      isSynced: fields[4] as bool,
+      isHealthy: (fields[3] as bool?) ??
+          ((fields[1] as String).toLowerCase().contains('sehat') ||
+           (fields[1] as String).toLowerCase().contains('healthy')),
+      isSynced: (fields[4] as bool?) ?? false,
       scannedAt: fields[5] as DateTime,
     );
   }

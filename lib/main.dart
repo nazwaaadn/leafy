@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:leafy_app/core/routes/app_routes.dart';
 import 'package:leafy_app/data/services/connectivity_service.dart';

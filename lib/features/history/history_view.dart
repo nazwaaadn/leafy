@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
+import 'package:leafy_app/core/routes/app_routes.dart';
 import 'history_controller.dart';
 
 class HistoryView extends StatelessWidget {
@@ -421,7 +422,7 @@ class HistoryView extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () {
-            context.push('/history-detail', extra: record);
+            context.push(AppRoutes.historyDetail, extra: record);
           },
           child: Container(
             decoration: BoxDecoration(
@@ -459,25 +460,47 @@ class HistoryView extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          Icon(
-                            isSynced
-                                ? Icons.cloud_done_outlined
-                                : Icons.storage_outlined,
-                            size: 13,
-                            color: const Color(0xFFBBAA99),
+                      // Badge pill berwarna untuk status sinkronisasi
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isSynced
+                              ? const Color(0xFFE8F5E9)   // hijau muda
+                              : const Color(0xFFFFF8E1),  // kuning muda
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSynced
+                                ? const Color(0xFF4A7C3F)  // hijau
+                                : const Color(0xFFFFCA28), // kuning
+                            width: 1,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isSynced ? 'Tersinkron' : 'Lokal',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFFBBAA99),
-                              fontWeight: FontWeight.w500,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isSynced
+                                  ? Icons.cloud_done_rounded
+                                  : Icons.cloud_off_rounded,
+                              size: 11,
+                              color: isSynced
+                                  ? const Color(0xFF4A7C3F)
+                                  : const Color(0xFFF57F17),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              isSynced ? 'Tersinkron' : 'Lokal',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: isSynced
+                                    ? const Color(0xFF4A7C3F)
+                                    : const Color(0xFFF57F17),
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

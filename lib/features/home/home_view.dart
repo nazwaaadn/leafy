@@ -214,7 +214,7 @@ class _HomeViewState extends State<HomeView> {
         ValueListenableBuilder<int>(
           valueListenable: _controller.sickCount,
           builder: (_, count, __) => _buildStatCard(
-            "Terindikasi Sakit",
+            "Tidak Sehat",
             count,
             Icons.warning_amber_rounded,
             const Color(0xFFC62828),

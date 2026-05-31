@@ -148,16 +148,7 @@ class HistoryDetailView extends StatelessWidget {
               ),
             );
           }),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: () => controller.saveToHistory(record.logId),
-              icon: const Icon(Icons.storage_rounded, color: Colors.white),
-              label: const Text('Simpan Pembaruan', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6B3A2A), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            ),
-          ),
+          
         ],
       ),
     );

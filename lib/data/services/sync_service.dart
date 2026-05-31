@@ -73,7 +73,8 @@ class SyncService {
 
   Future<bool> _uploadScanHistory(ScanHistoryRecord record) async {
     try {
-      await MongoService().insertScanHistory(record);
+      final dynamic mongo = MongoService();
+      await mongo.insertScanHistory(record);
       return true;
     } catch (e) {
       debugPrint('[SyncService] ScanHistory upload failed: $e');

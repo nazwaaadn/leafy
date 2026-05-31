@@ -7,6 +7,7 @@ import 'package:leafy_app/data/services/session_service.dart';
 import 'package:leafy_app/data/services/mongo_service.dart';
 import 'package:leafy_app/data/services/connectivity_service.dart';
 import 'package:leafy_app/data/models/detection_result.dart';
+import 'package:leafy_app/data/models/scan_history_record.dart';
 
 class HomeController {
   final SessionService _sessionService = SessionService();
@@ -77,22 +78,36 @@ class HomeController {
 
   void _loadStatsFromHive() {
     try {
-      if (!Hive.isBoxOpen('detections')) {
-        healthyCount.value = 0;
-        sickCount.value = 0;
-        return;
-      }
-
-      final box = Hive.box<DetectionResult>('detections');
       int h = 0;
       int s = 0;
+      final Set<String> processedIds = {};
 
-      for (final item in box.values) {
-        final label = item.label.toLowerCase();
-        if (label.contains('healthy')) {
-          h++;
-        } else {
-          s++;
+      // 1. Baca dari scan_history box (baru)
+      if (Hive.isBoxOpen('scan_history')) {
+        final box = Hive.box<ScanHistoryRecord>('scan_history');
+        for (final item in box.values) {
+          processedIds.add(item.id);
+          if (item.isHealthy) {
+            h++;
+          } else {
+            s++;
+          }
+        }
+      }
+
+      // 2. Baca dari detections box (lama) untuk backward compatibility, hindari duplikasi ID
+      if (Hive.isBoxOpen('detections')) {
+        final box = Hive.box<DetectionResult>('detections');
+        for (final item in box.values) {
+          if (!processedIds.contains(item.id)) {
+            processedIds.add(item.id);
+            final label = item.label.toLowerCase();
+            if (label.contains('healthy')) {
+              h++;
+            } else {
+              s++;
+            }
+          }
         }
       }
 

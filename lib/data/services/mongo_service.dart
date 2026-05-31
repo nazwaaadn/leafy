@@ -56,6 +56,42 @@ class MongoService {
     }
   }
 
+  // ─── ScanHistoryRecord (riwayat scan yang tampil di UI history) ────────────
+  Future<void> insertScanHistory(ScanHistoryRecord record) async {
+    final col = await _getCollection('scan_history');
+    await col.insertOne({
+      '_id': record.id,
+      'conditionName': record.conditionName,
+      'accuracyPercent': record.accuracyPercent,
+      'isHealthy': record.isHealthy,
+      'scannedAt': record.scannedAt.toIso8601String(),
+      'isSynced': true,
+    });
+  }
+
+  Future<Map<String, List<Map<String, dynamic>>>> getScanHistoryGroupedByDate({
+    String? userId,
+  }) async {
+    try {
+      final col = await _getCollection('scan_history');
+      final query = where.exists('_id').sortBy('scannedAt', descending: true);
+      final docs = await col.find(query).toList();
+
+      final Map<String, List<Map<String, dynamic>>> grouped = {};
+      for (final doc in docs) {
+        final raw = doc['scannedAt']?.toString() ?? '';
+        final dt = DateTime.tryParse(raw)?.toLocal();
+        if (dt == null) continue;
+        final key = _fmtDate(dt);
+        grouped.putIfAbsent(key, () => []).add(doc);
+      }
+      return grouped;
+    } catch (e) {
+      debugPrint('[MongoService] getScanHistoryGroupedByDate error: $e');
+      return {};
+    }
+  }
+
   // ─── DetectionResult (raw detections) ──────────────────────────────────────
   Future<void> insertDetection(DetectionResult result) async {
     final col = await _getCollection('detections');
@@ -108,22 +144,36 @@ class MongoService {
     String? userId,
   }) async {
     try {
-      final col = await _getCollection('detections');
-
-      final SelectorBuilder baseQuery =
-          userId != null ? where.eq('userId', userId) : where.exists('_id');
-
-      final allDocs = await col.find(baseQuery).toList();
-
       int healthy = 0;
       int sick = 0;
 
-      for (final doc in allDocs) {
-        final label = (doc['label'] ?? '').toString().toLowerCase();
-        if (label.contains('healthy')) {
+      final SelectorBuilder baseQuery = where.exists('_id');
+
+      // 1. Ambil dari scan_history
+      final historyCol = await _getCollection('scan_history');
+      final historyDocs = await historyCol.find(baseQuery).toList();
+      for (final doc in historyDocs) {
+        final isHealthy = doc['isHealthy'] == true;
+        if (isHealthy) {
           healthy++;
         } else {
           sick++;
+        }
+      }
+
+      // 2. Ambil dari detections (lama) untuk backward compatibility, hindari duplikasi ID
+      final detectionsCol = await _getCollection('detections');
+      final detectionDocs = await detectionsCol.find(baseQuery).toList();
+      for (final doc in detectionDocs) {
+        final id = doc['_id']?.toString();
+        final alreadyCounted = historyDocs.any((h) => h['_id']?.toString() == id);
+        if (!alreadyCounted) {
+          final label = (doc['label'] ?? '').toString().toLowerCase();
+          if (label.contains('healthy')) {
+            healthy++;
+          } else {
+            sick++;
+          }
         }
       }
 
