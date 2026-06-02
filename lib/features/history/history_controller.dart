@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:leafy_app/data/models/detection_result.dart';
+import 'package:leafy_app/data/models/scan_history_record.dart';
 import 'package:leafy_app/data/services/connectivity_service.dart';
 import 'package:leafy_app/data/services/mongo_service.dart';
 import 'package:leafy_app/data/services/session_service.dart';
+import 'package:leafy_app/data/services/sync_service.dart';
 
 enum SyncStatus { local, synced }
 
 enum HealthStatus { healthy, diseased }
 
+/// Wrapper ringan agar history_view.dart tetap kompatibel
 class ScanRecord {
   final String logId;
   final String conditionName;
@@ -26,6 +29,35 @@ class ScanRecord {
     required this.syncStatus,
     required this.healthStatus,
   });
+
+  /// Konversi dari ScanHistoryRecord (Hive model typeId:1)
+  factory ScanRecord.fromHive(ScanHistoryRecord r) {
+    final dt = r.scannedAt.toLocal();
+    return ScanRecord(
+      logId: '#${r.id.substring(0, r.id.length.clamp(0, 6)).toUpperCase()}',
+      conditionName: r.conditionName,
+      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      accuracyPercent: r.accuracyPercent.round(),
+      syncStatus: r.isSynced ? SyncStatus.synced : SyncStatus.local,
+      healthStatus: r.isHealthy ? HealthStatus.healthy : HealthStatus.diseased,
+    );
+  }
+
+  /// Konversi dari DetectionResult (Hive model typeId:0)
+  factory ScanRecord.fromDetectionResult(DetectionResult r) {
+    final dt = r.detectedAt.toLocal();
+    final label = r.label;
+    return ScanRecord(
+      logId: '#${r.id.substring(0, r.id.length.clamp(0, 6)).toUpperCase()}',
+      conditionName: label.isEmpty ? 'Tidak Diketahui' : label,
+      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      accuracyPercent: (r.confidence * 100).round().clamp(0, 100),
+      syncStatus: r.isSynced ? SyncStatus.synced : SyncStatus.local,
+      healthStatus: label.toLowerCase().contains('healthy')
+          ? HealthStatus.healthy
+          : HealthStatus.diseased,
+    );
+  }
 }
 
 class HistoryController extends GetxController {
@@ -46,10 +78,15 @@ class HistoryController extends GetxController {
 
   final RxBool isLoading = false.obs;
   final RxBool hasError = false.obs;
+  final RxInt pendingCount = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
+    // Daftarkan callback ke SyncService agar UI otomatis refresh setelah sync
+    SyncService().onSyncComplete = () {
+      _loadData();
+    };
     _loadData();
   }
 
@@ -69,11 +106,13 @@ class HistoryController extends GetxController {
       _loadFromHive();
     } finally {
       isLoading.value = false;
+      _updatePendingCount();
     }
   }
 
   Future<void> _loadFromMongo() async {
-    final grouped = await _mongo.getDetectionsGroupedByDate(
+    // Baca dari collection 'scan_history' (bukan 'detections')
+    final grouped = await _mongo.getScanHistoryGroupedByDate(
       userId: _session.currentUser?.id,
     );
 
@@ -92,18 +131,24 @@ class HistoryController extends GetxController {
 
   void _loadFromHive() {
     try {
-      if (!Hive.isBoxOpen('detections')) {
-        _scanData.value = {};
-        return;
-      }
-
-      final box = Hive.box<DetectionResult>('detections');
       final Map<String, List<ScanRecord>> result = {};
 
-      for (final item in box.values) {
-        final dateKey = _fmt(item.detectedAt.toLocal());
-        final record = _detectionResultToScanRecord(item);
-        result.putIfAbsent(dateKey, () => []).add(record);
+      // Prioritaskan ScanHistoryRecord box (typeId:1) jika ada
+      if (Hive.isBoxOpen('scan_history')) {
+        final box = Hive.box<ScanHistoryRecord>('scan_history');
+        for (final item in box.values) {
+          final dateKey = _fmt(item.scannedAt.toLocal());
+          result.putIfAbsent(dateKey, () => []).add(ScanRecord.fromHive(item));
+        }
+      }
+
+      // Fallback ke DetectionResult box (typeId:0) jika scan_history kosong
+      if (result.isEmpty && Hive.isBoxOpen('detections')) {
+        final box = Hive.box<DetectionResult>('detections');
+        for (final item in box.values) {
+          final dateKey = _fmt(item.detectedAt.toLocal());
+          result.putIfAbsent(dateKey, () => []).add(ScanRecord.fromDetectionResult(item));
+        }
       }
 
       for (final key in result.keys) {
@@ -118,43 +163,57 @@ class HistoryController extends GetxController {
   }
 
   ScanRecord _mongoDocToScanRecord(Map<String, dynamic> doc) {
-    final label = (doc['label'] ?? '').toString();
-    final confidence = (doc['confidence'] ?? 0.0) as num;
-    final rawDate = doc['detectedAt']?.toString() ?? '';
+    // Baca field dari collection scan_history
+    final conditionName = (doc['conditionName'] ?? '').toString();
+    final accuracy = (doc['accuracyPercent'] ?? 0.0) as num;
+    final rawIsHealthy = doc['isHealthy'];
+    final isHealthy = rawIsHealthy == true ||
+        rawIsHealthy?.toString().toLowerCase() == 'true' ||
+        conditionName.toLowerCase() == 'sehat' ||
+        conditionName.toLowerCase().contains('healthy');
+    final rawDate = doc['scannedAt']?.toString() ?? '';
     final dt = DateTime.tryParse(rawDate)?.toLocal() ?? DateTime.now();
-    final isSynced = doc['isSynced'] == true;
+    final isSynced = doc['isSynced'] ?? true;
 
     return ScanRecord(
       logId: _shortId(doc['_id']?.toString() ?? ''),
-      conditionName: _labelToConditionName(label),
+      conditionName: conditionName.isEmpty ? 'Tidak Diketahui' : conditionName,
       time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
-      accuracyPercent: (confidence * 100).round().clamp(0, 100),
+      accuracyPercent: accuracy.round().clamp(0, 100),
       syncStatus: isSynced ? SyncStatus.synced : SyncStatus.local,
-      healthStatus: label.toLowerCase().contains('healthy')
-          ? HealthStatus.healthy
-          : HealthStatus.diseased,
+      healthStatus: isHealthy ? HealthStatus.healthy : HealthStatus.diseased,
     );
   }
 
-  ScanRecord _detectionResultToScanRecord(DetectionResult item) {
-    final dt = item.detectedAt.toLocal();
-    return ScanRecord(
-      logId: _shortId(item.id),
-      conditionName: _labelToConditionName(item.label),
-      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
-      accuracyPercent: (item.confidence * 100).round().clamp(0, 100),
-      syncStatus: item.isSynced ? SyncStatus.synced : SyncStatus.local,
-      healthStatus: item.label.toLowerCase().contains('healthy')
-          ? HealthStatus.healthy
-          : HealthStatus.diseased,
-    );
-  }
 
   String _shortId(String id) {
     if (id.isEmpty) return '#???';
     final clean = id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
     return '#${clean.substring(0, clean.length.clamp(0, 6)).toUpperCase()}';
   }
+
+  /// Hitung berapa banyak data lokal yang belum tersinkron
+  void _updatePendingCount() {
+    int count = 0;
+    try {
+      if (Hive.isBoxOpen('scan_history')) {
+        final box = Hive.box<ScanHistoryRecord>('scan_history');
+        for (final r in box.values) {
+          if (!r.isSynced) count++;
+        }
+      }
+      if (Hive.isBoxOpen('detections')) {
+        final box = Hive.box<DetectionResult>('detections');
+        for (final r in box.values) {
+          if (!r.isSynced) count++;
+        }
+      }
+    } catch (_) {}
+    pendingCount.value = count;
+  }
+
+  /// Muat ulang data riwayat (dipanggil setelah simpan dari ResultView)
+  Future<void> refreshHistory() => _loadData();
 
   String _labelToConditionName(String label) {
     if (label.toLowerCase().contains('healthy')) return 'Sehat';
@@ -202,6 +261,8 @@ class HistoryController extends GetxController {
     });
   }
 
+  /// Ambil records untuk tanggal yang dipilih sebagai [ScanRecord] agar
+  /// history_view.dart tetap kompatibel
   List<ScanRecord> get recordsForSelectedDate {
     return _scanData[_fmt(selectedDate.value)] ?? [];
   }
