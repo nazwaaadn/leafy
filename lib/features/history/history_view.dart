@@ -18,7 +18,6 @@ class HistoryView extends StatelessWidget {
         children: [
           _buildMonthHeader(controller),
           _buildCalendar(controller),
-          // Banner "Menunggu Sinkronisasi" — hanya muncul jika ada pending
           Obx(() {
             final pending = controller.pendingCount.value;
             if (pending == 0) return const SizedBox.shrink();
@@ -114,9 +113,11 @@ class HistoryView extends StatelessWidget {
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: current,
+      initialDate: current.isAfter(DateTime(DateTime.now().year, DateTime.now().month))
+          ? DateTime(DateTime.now().year, DateTime.now().month)
+          : current,
       firstDate: DateTime(2020, 1),
-      lastDate: DateTime(2030, 12),
+      lastDate: DateTime(DateTime.now().year, DateTime.now().month),
       initialDatePickerMode: DatePickerMode.year,
       helpText: 'Pilih Bulan & Tahun',
       cancelText: 'Batal',

@@ -237,16 +237,27 @@ class HistoryController extends GetxController {
 
   List<DateTime> get calendarDays {
     final m = activeMonth.value;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final totalDays = daysInActiveMonth;
     return List.generate(
-      daysInActiveMonth,
+      totalDays,
       (i) => DateTime(m.year, m.month, i + 1),
-    );
+    ).where((d) => !d.isAfter(today)).toList();
   }
 
   void changeMonth(DateTime picked) {
-    final newMonth = DateTime(picked.year, picked.month);
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final pickedMonth = DateTime(picked.year, picked.month);
+
+    // Tolak bulan/tahun di masa depan
+    if (pickedMonth.isAfter(currentMonth)) return;
+
+    final newMonth = pickedMonth;
     activeMonth.value = newMonth;
 
+    // Jika bulan yang dipilih adalah bulan ini, batas hari maksimal adalah hari ini
     final firstDay = DateTime(newMonth.year, newMonth.month, 1);
     selectedDate.value = firstDay;
 
@@ -268,6 +279,11 @@ class HistoryController extends GetxController {
   }
 
   void selectDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    // Tolak tanggal di masa depan
+    if (target.isAfter(today)) return;
     selectedDate.value = date;
   }
 

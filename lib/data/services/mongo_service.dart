@@ -56,7 +56,6 @@ class MongoService {
     }
   }
 
-  // ─── ScanHistoryRecord (riwayat scan yang tampil di UI history) ────────────
   Future<void> insertScanHistory(ScanHistoryRecord record) async {
     final col = await _getCollection('scan_history');
     await col.insertOne({
@@ -71,17 +70,30 @@ class MongoService {
 
   Future<Map<String, List<Map<String, dynamic>>>> getScanHistoryGroupedByDate({
     String? userId,
+    DateTime? month,
   }) async {
     try {
       final col = await _getCollection('scan_history');
       final query = where.exists('_id').sortBy('scannedAt', descending: true);
       final docs = await col.find(query).toList();
 
+      final now = DateTime.now();
+      final currentMonth = DateTime(now.year, now.month);
+
+      if (month != null) {
+        final requestedMonth = DateTime(month.year, month.month);
+        if (requestedMonth.isAfter(currentMonth)) {
+          debugPrint('[MongoService] getScanHistoryGroupedByDate: periode masa depan ditolak');
+          return {};
+        }
+      }
+
       final Map<String, List<Map<String, dynamic>>> grouped = {};
       for (final doc in docs) {
         final raw = doc['scannedAt']?.toString() ?? '';
         final dt = DateTime.tryParse(raw)?.toLocal();
         if (dt == null) continue;
+        if (dt.isAfter(now)) continue;
         final key = _fmtDate(dt);
         grouped.putIfAbsent(key, () => []).add(doc);
       }
@@ -92,7 +104,6 @@ class MongoService {
     }
   }
 
-  // ─── DetectionResult (raw detections) ──────────────────────────────────────
   Future<void> insertDetection(DetectionResult result) async {
     final col = await _getCollection('detections');
     await col.insertOne({
@@ -149,7 +160,6 @@ class MongoService {
 
       final SelectorBuilder baseQuery = where.exists('_id');
 
-      // 1. Ambil dari scan_history
       final historyCol = await _getCollection('scan_history');
       final historyDocs = await historyCol.find(baseQuery).toList();
       for (final doc in historyDocs) {
@@ -161,7 +171,6 @@ class MongoService {
         }
       }
 
-      // 2. Ambil dari detections (lama) untuk backward compatibility, hindari duplikasi ID
       final detectionsCol = await _getCollection('detections');
       final detectionDocs = await detectionsCol.find(baseQuery).toList();
       for (final doc in detectionDocs) {
