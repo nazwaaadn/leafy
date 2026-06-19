@@ -32,8 +32,11 @@ class HistoryView extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.cloud_off_rounded,
-                      color: Color(0xFFF57F17), size: 18),
+                  const Icon(
+                    Icons.cloud_off_rounded,
+                    color: Color(0xFFF57F17),
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -76,7 +79,9 @@ class HistoryView extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(
-      BuildContext context, HistoryController controller) {
+    BuildContext context,
+    HistoryController controller,
+  ) {
     return AppBar(
       backgroundColor: const Color(0xFFEAE4D9),
       elevation: 0,
@@ -108,12 +113,15 @@ class HistoryView extends StatelessWidget {
   }
 
   Future<void> _showMonthYearPicker(
-      BuildContext context, HistoryController controller) async {
+    BuildContext context,
+    HistoryController controller,
+  ) async {
     final current = controller.activeMonth.value;
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: current.isAfter(DateTime(DateTime.now().year, DateTime.now().month))
+      initialDate:
+          current.isAfter(DateTime(DateTime.now().year, DateTime.now().month))
           ? DateTime(DateTime.now().year, DateTime.now().month)
           : current,
       firstDate: DateTime(2020, 1),
@@ -153,30 +161,32 @@ class HistoryView extends StatelessWidget {
   }
 
   Widget _buildMonthHeader(HistoryController controller) {
-    return Obx(() => Container(
-          width: double.infinity,
-          color: const Color(0xFFEAE4D9),
-          padding: const EdgeInsets.fromLTRB(20, 6, 20, 2),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.calendar_today_outlined,
-                size: 14,
+    return Obx(
+      () => Container(
+        width: double.infinity,
+        color: const Color(0xFFEAE4D9),
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 2),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 14,
+              color: Color(0xFF8A7A6A),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              controller.formattedActiveMonth(),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
                 color: Color(0xFF8A7A6A),
+                letterSpacing: 0.3,
               ),
-              const SizedBox(width: 6),
-              Text(
-                controller.formattedActiveMonth(),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF8A7A6A),
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-        ));
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCalendar(HistoryController controller) {
@@ -192,8 +202,10 @@ class HistoryView extends StatelessWidget {
               child: ListView.builder(
                 controller: controller.calendarScrollController,
                 scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 itemCount: days.length,
                 itemBuilder: (context, index) {
                   final date = days[index];
@@ -216,7 +228,9 @@ class HistoryView extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: isActive
-                                  ? const Color(0xFF6B3A2A).withValues(alpha: 0.3)
+                                  ? const Color(
+                                      0xFF6B3A2A,
+                                    ).withValues(alpha: 0.3)
                                   : Colors.black.withValues(alpha: 0.06),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
@@ -257,8 +271,8 @@ class HistoryView extends StatelessWidget {
                                 shape: BoxShape.circle,
                                 color: hasData
                                     ? (isActive
-                                        ? Colors.white54
-                                        : const Color(0xFF4A7C3F))
+                                          ? Colors.white54
+                                          : const Color(0xFF4A7C3F))
                                     : Colors.transparent,
                               ),
                             ),
@@ -308,8 +322,7 @@ class HistoryView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Container(
           width: double.infinity,
-          padding:
-              const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -405,8 +418,9 @@ class HistoryView extends StatelessWidget {
     final isHealthy = record.healthStatus == HealthStatus.healthy;
     final isSynced = record.syncStatus == SyncStatus.synced;
 
-    final Color accentColor =
-        isHealthy ? const Color(0xFF4A7C3F) : const Color(0xFFE65100);
+    final Color accentColor = isHealthy
+        ? const Color(0xFF4A7C3F)
+        : const Color(0xFFE65100);
     final Color bgColor = isHealthy
         ? const Color(0xFF4A7C3F).withValues(alpha: 0.1)
         : const Color(0xFFE65100).withValues(alpha: 0.1);
@@ -461,18 +475,20 @@ class HistoryView extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // Badge pill berwarna untuk status sinkronisasi
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: isSynced
-                              ? const Color(0xFFE8F5E9)   // hijau muda
-                              : const Color(0xFFFFF8E1),  // kuning muda
+                              ? const Color(0xFFE8F5E9)
+                              : const Color(0xFFFFF8E1),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSynced
-                                ? const Color(0xFF4A7C3F)  // hijau
-                                : const Color(0xFFFFCA28), // kuning
+                                ? const Color(0xFF4A7C3F)
+                                : const Color(0xFFFFCA28),
                             width: 1,
                           ),
                         ),
@@ -517,11 +533,7 @@ class HistoryView extends StatelessWidget {
                           color: bgColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(
-                          statusIcon,
-                          color: accentColor,
-                          size: 22,
-                        ),
+                        child: Icon(statusIcon, color: accentColor, size: 22),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -609,8 +621,7 @@ class HistoryView extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               color: color,
-              fontWeight:
-                  isActive ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ],

@@ -35,7 +35,7 @@ class ScannerPainter extends CustomPainter {
     const arm = 60.0;
 
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.6)
+      ..color = Colors.white.withValues(alpha: 0.6)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
@@ -45,7 +45,7 @@ class ScannerPainter extends CustomPainter {
       Offset(cx, cy),
       r,
       Paint()
-        ..color = Colors.green.withOpacity(0.5)
+        ..color = Colors.green.withValues(alpha: 0.5)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0,
     );
@@ -71,7 +71,7 @@ class ScannerPainter extends CustomPainter {
     canvas.drawRect(
       rect,
       Paint()
-        ..color = Colors.black.withOpacity(0.4)
+        ..color = Colors.black.withValues(alpha: 0.4)
         ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4),
     );
 
@@ -139,7 +139,7 @@ class ScannerPainter extends CustomPainter {
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(bgRect, const Radius.circular(4)),
-      Paint()..color = color.withOpacity(0.85),
+      Paint()..color = color.withValues(alpha: 0.85),
     );
 
     tp.paint(canvas, Offset(bgRect.left + padding, bgRect.top + padding));

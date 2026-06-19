@@ -106,7 +106,7 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
             .toList();
         scanState = ScanState.done;
       } catch (_) {
-        // Skip
+        scanState = ScanState.error;
       } finally {
         _isProcessingFrame = false;
         notifyListeners();
@@ -172,7 +172,7 @@ class DetectionController extends ChangeNotifier with WidgetsBindingObserver {
       scanState = ScanState.detecting;
       currentDetections = [];
       capturedImagePath = image.path;
-      
+
       if (mode == ScanMode.live) {
         await _stopLiveStream();
       }

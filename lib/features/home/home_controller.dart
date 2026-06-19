@@ -17,8 +17,9 @@ class HomeController {
   final ValueNotifier<int> healthyCount = ValueNotifier<int>(0);
   final ValueNotifier<int> sickCount = ValueNotifier<int>(0);
   final ValueNotifier<bool> statsLoading = ValueNotifier<bool>(false);
-  final ValueNotifier<String> syncStatus =
-      ValueNotifier<String>('Memuat data...');
+  final ValueNotifier<String> syncStatus = ValueNotifier<String>(
+    'Memuat data...',
+  );
 
   UserModel? get currentUser => _sessionService.currentUser;
 
@@ -56,9 +57,7 @@ class HomeController {
     syncStatus.value = 'Menyinkronkan...';
 
     try {
-      final stats = await _mongo.getDetectionStats(
-        userId: currentUser?.id,
-      );
+      final stats = await _mongo.getDetectionStats(userId: currentUser?.id);
 
       if (stats.healthy == -1) {
         _loadStatsFromHive();
@@ -82,7 +81,6 @@ class HomeController {
       int s = 0;
       final Set<String> processedIds = {};
 
-      // 1. Baca dari scan_history box (baru)
       if (Hive.isBoxOpen('scan_history')) {
         final box = Hive.box<ScanHistoryRecord>('scan_history');
         for (final item in box.values) {
@@ -95,7 +93,6 @@ class HomeController {
         }
       }
 
-      // 2. Baca dari detections box (lama) untuk backward compatibility, hindari duplikasi ID
       if (Hive.isBoxOpen('detections')) {
         final box = Hive.box<DetectionResult>('detections');
         for (final item in box.values) {

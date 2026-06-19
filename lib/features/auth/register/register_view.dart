@@ -95,7 +95,7 @@ class RegisterView extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -113,10 +113,7 @@ class RegisterView extends StatelessWidget {
         ),
         decoration: InputDecoration(
           hintText: 'Nama Anda',
-          hintStyle: const TextStyle(
-            color: Color(0xFFBBAA99),
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: Color(0xFFBBAA99), fontSize: 14),
           prefixIcon: const Icon(
             Icons.person_outline_rounded,
             color: Color(0xFFBBAA99),
@@ -132,10 +129,7 @@ class RegisterView extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF4A7C3F),
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF4A7C3F), width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             vertical: 16,
@@ -155,7 +149,7 @@ class RegisterView extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -172,10 +166,7 @@ class RegisterView extends StatelessWidget {
         ),
         decoration: InputDecoration(
           hintText: 'email@contoh.com',
-          hintStyle: const TextStyle(
-            color: Color(0xFFBBAA99),
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: Color(0xFFBBAA99), fontSize: 14),
           prefixIcon: const Icon(
             Icons.mail_outline_rounded,
             color: Color(0xFFBBAA99),
@@ -191,10 +182,7 @@ class RegisterView extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF4A7C3F),
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF4A7C3F), width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             vertical: 16,
@@ -208,114 +196,118 @@ class RegisterView extends StatelessWidget {
   }
 
   Widget _buildPasswordField(RegisterController controller) {
-    return Obx(() => Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: controller.passwordController,
-            obscureText: !controller.isPasswordVisible.value,
-            autocorrect: false,
-            enableSuggestions: false,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF3A2A1E),
-              fontWeight: FontWeight.w400,
+    return Obx(
+      () => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            decoration: InputDecoration(
-              hintText: 'Buat kata sandi',
-              hintStyle: const TextStyle(
-                color: Color(0xFFBBAA99),
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                Icons.lock_outline_rounded,
-                color: Color(0xFFBBAA99),
+          ],
+        ),
+        child: TextField(
+          controller: controller.passwordController,
+          obscureText: !controller.isPasswordVisible.value,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF3A2A1E),
+            fontWeight: FontWeight.w400,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Buat kata sandi',
+            hintStyle: const TextStyle(color: Color(0xFFBBAA99), fontSize: 14),
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: Color(0xFFBBAA99),
+              size: 20,
+            ),
+            suffixIcon: GestureDetector(
+              onTap: controller.togglePasswordVisibility,
+              child: Icon(
+                controller.isPasswordVisible.value
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: const Color(0xFFBBAA99),
                 size: 20,
               ),
-              suffixIcon: GestureDetector(
-                onTap: controller.togglePasswordVisibility,
-                child: Icon(
-                  controller.isPasswordVisible.value
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  color: const Color(0xFFBBAA99),
-                  size: 20,
-                ),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFF4A7C3F),
-                  width: 1.5,
-                ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 16,
-              ),
-              filled: true,
-              fillColor: Colors.white,
             ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF4A7C3F),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
+            filled: true,
+            fillColor: Colors.white,
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildRegisterButton(
-      BuildContext context, RegisterController controller) {
-    return Obx(() => SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: controller.isLoading.value
-                ? null
-                : () => controller.register(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A7C3F),
-              disabledBackgroundColor:
-                  const Color(0xFF4A7C3F).withOpacity(0.6),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              shadowColor: const Color(0xFF4A7C3F).withOpacity(0.4),
+    BuildContext context,
+    RegisterController controller,
+  ) {
+    return Obx(
+      () => SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: controller.isLoading.value
+              ? null
+              : () => controller.register(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4A7C3F),
+            disabledBackgroundColor: const Color(
+              0xFF4A7C3F,
+            ).withValues(alpha: 0.6),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: controller.isLoading.value
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : const Text(
-                    'Daftar',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+            shadowColor: const Color(0xFF4A7C3F).withValues(alpha: 0.4),
           ),
-        ));
+          child: controller.isLoading.value
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+              : const Text(
+                  'Daftar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLoginLink(BuildContext context, RegisterController controller) {

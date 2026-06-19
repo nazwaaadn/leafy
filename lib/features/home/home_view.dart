@@ -38,19 +38,25 @@ class _HomeViewState extends State<HomeView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Aksi Cepat",
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF5D4037))),
+                  const Text(
+                    "Aksi Cepat",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF5D4037),
+                    ),
+                  ),
                   const SizedBox(height: 15),
                   _buildScanActionCard(),
                   const SizedBox(height: 30),
-                  const Text("Statistik Tanaman",
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF5D4037))),
+                  const Text(
+                    "Statistik Tanaman",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF5D4037),
+                    ),
+                  ),
                   const SizedBox(height: 15),
                   _buildStatisticsGrid(),
                 ],
@@ -89,16 +95,21 @@ class _HomeViewState extends State<HomeView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Halo, ${_controller.displayName}!",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Serif')),
-                    const Text("Tanaman Anda terlihat lebih baik hari ini.",
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(
+                      "Halo, ${_controller.displayName}!",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Serif',
+                      ),
+                    ),
+                    const Text(
+                      "Tanaman Anda terlihat lebih baik hari ini.",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
                   ],
                 ),
               ),
@@ -107,11 +118,14 @@ class _HomeViewState extends State<HomeView> {
                   CircleAvatar(
                     radius: 25,
                     backgroundColor: const Color(0xFF8D6E63),
-                    child: Text(_controller.avatarInitial,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold)),
+                    child: Text(
+                      _controller.avatarInitial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
@@ -119,14 +133,14 @@ class _HomeViewState extends State<HomeView> {
                     icon: const Icon(Icons.logout, color: Colors.white),
                   ),
                 ],
-              )
+              ),
             ],
           ),
           const SizedBox(height: 30),
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFF4E342E).withOpacity(0.6),
+              color: const Color(0xFF4E342E).withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white10),
             ),
@@ -137,27 +151,31 @@ class _HomeViewState extends State<HomeView> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("STATUS SYNC CLOUD",
-                        style: TextStyle(
-                            color: Colors.white60,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.1)),
+                    const Text(
+                      "STATUS SYNC CLOUD",
+                      style: TextStyle(
+                        color: Colors.white60,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
                     ValueListenableBuilder<String>(
                       valueListenable: _controller.syncStatus,
-                      builder: (_, status, __) => Text(
+                      builder: (_, status, _) => Text(
                         status,
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600),
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
-                )
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -178,20 +196,28 @@ class _HomeViewState extends State<HomeView> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.camera_alt_outlined,
-                  size: 35, color: Colors.white),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                size: 35,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 15),
-            const Text("Mulai Deteksi YOLOv8",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-            const Text("Gunakan kamera untuk cek daun",
-                style: TextStyle(color: Colors.white60, fontSize: 13)),
+            const Text(
+              "Mulai Deteksi YOLOv8",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Text(
+              "Gunakan kamera untuk cek daun",
+              style: TextStyle(color: Colors.white60, fontSize: 13),
+            ),
           ],
         ),
       ),
@@ -203,7 +229,7 @@ class _HomeViewState extends State<HomeView> {
       children: [
         ValueListenableBuilder<int>(
           valueListenable: _controller.healthyCount,
-          builder: (_, count, __) => _buildStatCard(
+          builder: (_, count, _) => _buildStatCard(
             "Daun Sehat",
             count,
             Icons.check_circle_outline,
@@ -213,7 +239,7 @@ class _HomeViewState extends State<HomeView> {
         const SizedBox(width: 15),
         ValueListenableBuilder<int>(
           valueListenable: _controller.sickCount,
-          builder: (_, count, __) => _buildStatCard(
+          builder: (_, count, _) => _buildStatCard(
             "Tidak Sehat",
             count,
             Icons.warning_amber_rounded,
@@ -233,9 +259,10 @@ class _HomeViewState extends State<HomeView> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
@@ -246,18 +273,21 @@ class _HomeViewState extends State<HomeView> {
                 Icon(icon, size: 20, color: color),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(label,
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: color,
-                          fontWeight: FontWeight.bold)),
-                )
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 15),
             ValueListenableBuilder<bool>(
               valueListenable: _controller.statsLoading,
-              builder: (_, loading, __) {
+              builder: (_, loading, _) {
                 if (loading) {
                   return SizedBox(
                     height: 38,
@@ -271,9 +301,10 @@ class _HomeViewState extends State<HomeView> {
                 return Text(
                   value.toString(),
                   style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4E342E)),
+                    fontSize: 38,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4E342E),
+                  ),
                 );
               },
             ),
@@ -322,12 +353,14 @@ class _HomeViewState extends State<HomeView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: isActive ? const Color(0xFF1B5E20) : Colors.grey),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: isActive ? const Color(0xFF1B5E20) : Colors.grey,
-                  fontWeight:
-                      isActive ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isActive ? const Color(0xFF1B5E20) : Colors.grey,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
@@ -346,14 +379,18 @@ class _HomeViewState extends State<HomeView> {
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 5))
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
         ],
       ),
       child: IconButton(
-        icon: const Icon(Icons.fullscreen_exit_rounded,
-            size: 35, color: Colors.white),
+        icon: const Icon(
+          Icons.fullscreen_exit_rounded,
+          size: 35,
+          color: Colors.white,
+        ),
         onPressed: () => _controller.onScanPressed(context),
       ),
     );

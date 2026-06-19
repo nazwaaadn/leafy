@@ -100,7 +100,7 @@ class LoginView extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6B3A2A).withOpacity(0.35),
+            color: const Color(0xFF6B3A2A).withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -110,16 +110,16 @@ class LoginView extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Transform.rotate(
-            angle: - 0.25,
+            angle: -0.25,
             child: Image.asset(
-            'assets/images/leaf_logo.png',
-            fit: BoxFit.contain,
+              'assets/images/leaf_logo.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildFieldLabel(String label) {
     return Align(
@@ -143,7 +143,7 @@ class LoginView extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -160,10 +160,7 @@ class LoginView extends StatelessWidget {
         ),
         decoration: InputDecoration(
           hintText: 'leafy@gmail.com',
-          hintStyle: const TextStyle(
-            color: Color(0xFFBBAA99),
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: Color(0xFFBBAA99), fontSize: 14),
           prefixIcon: const Icon(
             Icons.mail_outline_rounded,
             color: Color(0xFFBBAA99),
@@ -179,10 +176,7 @@ class LoginView extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF4A7C3F),
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF4A7C3F), width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             vertical: 16,
@@ -196,112 +190,115 @@ class LoginView extends StatelessWidget {
   }
 
   Widget _buildPasswordField(LoginController controller) {
-    return Obx(() => Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: controller.passwordController,
-            obscureText: !controller.isPasswordVisible.value,
-            autocorrect: false,
-            enableSuggestions: false,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF3A2A1E),
-              fontWeight: FontWeight.w400,
+    return Obx(
+      () => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            decoration: InputDecoration(
-              hintText: '••••••••',
-              hintStyle: const TextStyle(
-                color: Color(0xFFBBAA99),
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                Icons.lock_outline_rounded,
-                color: Color(0xFFBBAA99),
+          ],
+        ),
+        child: TextField(
+          controller: controller.passwordController,
+          obscureText: !controller.isPasswordVisible.value,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF3A2A1E),
+            fontWeight: FontWeight.w400,
+          ),
+          decoration: InputDecoration(
+            hintText: '••••••••',
+            hintStyle: const TextStyle(color: Color(0xFFBBAA99), fontSize: 14),
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: Color(0xFFBBAA99),
+              size: 20,
+            ),
+            suffixIcon: GestureDetector(
+              onTap: controller.togglePasswordVisibility,
+              child: Icon(
+                controller.isPasswordVisible.value
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: const Color(0xFFBBAA99),
                 size: 20,
               ),
-              suffixIcon: GestureDetector(
-                onTap: controller.togglePasswordVisibility,
-                child: Icon(
-                  controller.isPasswordVisible.value
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  color: const Color(0xFFBBAA99),
-                  size: 20,
-                ),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFF4A7C3F),
-                  width: 1.5,
-                ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 16,
-              ),
-              filled: true,
-              fillColor: Colors.white,
             ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF4A7C3F),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
+            filled: true,
+            fillColor: Colors.white,
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildLoginButton(BuildContext context, LoginController controller) {
-    return Obx(() => SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: controller.isLoading.value
-                ? null
-                : () => controller.login(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A7C3F),
-              disabledBackgroundColor: const Color(0xFF4A7C3F).withOpacity(0.6),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              shadowColor: const Color(0xFF4A7C3F).withOpacity(0.4),
+    return Obx(
+      () => SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: controller.isLoading.value
+              ? null
+              : () => controller.login(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4A7C3F),
+            disabledBackgroundColor: const Color(
+              0xFF4A7C3F,
+            ).withValues(alpha: 0.6),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: controller.isLoading.value
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : const Text(
-                    'Masuk',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+            shadowColor: const Color(0xFF4A7C3F).withValues(alpha: 0.4),
           ),
-        ));
+          child: controller.isLoading.value
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+              : const Text(
+                  'Masuk',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+        ),
+      ),
+    );
   }
 
   Widget _buildRegisterLink(BuildContext context, LoginController controller) {

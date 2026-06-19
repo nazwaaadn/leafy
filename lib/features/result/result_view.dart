@@ -4,7 +4,6 @@ import '../../data/models/detection_item.dart';
 import '../history/history_controller.dart';
 import 'result_controller.dart';
 
-/// Durasi animasi loading sebelum konten hasil ditampilkan
 const _kAnalysisDuration = Duration(milliseconds: 2200);
 
 class ResultView extends StatefulWidget {
@@ -64,12 +63,10 @@ class _ResultViewState extends State<ResultView>
     );
   }
 
-  // ─── Loading Screen ────────────────────────────────────────────────────────
   Widget _buildAnalyzingScreen() {
     return _AnalyzingScreen(bgColor: bgColor, accentBrown: accentBrown);
   }
 
-  // ─── Result Content ────────────────────────────────────────────────────────
   Widget _buildResultContent() {
     return FadeTransition(
       opacity: _fadeAnim,
@@ -118,12 +115,9 @@ class _ResultViewState extends State<ResultView>
     );
   }
 
-  // ─── Disease Report Card ───────────────────────────────────────────────────
   Widget _buildDiseaseReportCard(DiseaseReport report, int index) {
     final isExpanded = _expandedIndices.contains(index);
     final total = _controller.reports.length;
-
-    // Label "Diagnosa N" — hanya tampil jika ada lebih dari 1 hasil
     final diagnosisLabel = total > 1 ? 'Diagnosa ${index + 1}' : null;
 
     final cardBorder = index == 0 && total > 1
@@ -158,7 +152,8 @@ class _ResultViewState extends State<ResultView>
         severityColor = accentBrown;
     }
 
-    final isHealthy = report.status.toLowerCase().contains('sehat') ||
+    final isHealthy =
+        report.status.toLowerCase().contains('sehat') ||
         report.status.toLowerCase().contains('bebas');
 
     return Container(
@@ -178,7 +173,6 @@ class _ResultViewState extends State<ResultView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label "Diagnosa N" di atas kartu
           if (diagnosisLabel != null)
             Container(
               width: double.infinity,
@@ -187,8 +181,9 @@ class _ResultViewState extends State<ResultView>
                 color: index == 0
                     ? primaryBrown.withValues(alpha: 0.92)
                     : accentBrown.withValues(alpha: 0.12),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(18)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
+                ),
               ),
               child: Text(
                 diagnosisLabel,
@@ -200,8 +195,6 @@ class _ResultViewState extends State<ResultView>
                 ),
               ),
             ),
-
-          // Isi kartu
           Padding(
             padding: const EdgeInsets.all(18),
             child: Column(
@@ -210,33 +203,31 @@ class _ResultViewState extends State<ResultView>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icon status
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isHealthy
                             ? const Color(0xFFE8F5E9)
                             : report.label == 'None'
-                                ? Colors.grey.shade100
-                                : const Color(0xFFFFF3E0),
+                            ? Colors.grey.shade100
+                            : const Color(0xFFFFF3E0),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         isHealthy
                             ? Icons.check_circle_outline
                             : report.label == 'None'
-                                ? Icons.info_outline
-                                : Icons.warning_amber_rounded,
+                            ? Icons.info_outline
+                            : Icons.warning_amber_rounded,
                         color: isHealthy
                             ? Colors.green.shade700
                             : report.label == 'None'
-                                ? Colors.blueGrey
-                                : const Color(0xFFE65100),
+                            ? Colors.blueGrey
+                            : const Color(0xFFE65100),
                         size: 36,
                       ),
                     ),
                     const SizedBox(width: 14),
-                    // Nama & status
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +253,9 @@ class _ResultViewState extends State<ResultView>
                           const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
@@ -282,8 +275,6 @@ class _ResultViewState extends State<ResultView>
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // Stat chips
                 Row(
                   children: [
                     _buildSmallStatCard(
@@ -300,12 +291,13 @@ class _ResultViewState extends State<ResultView>
                   ],
                 ),
                 const Divider(height: 28, thickness: 0.8),
-
-                // Analisis
                 RichText(
                   text: TextSpan(
                     style: const TextStyle(
-                        color: Colors.black87, height: 1.5, fontSize: 13.5),
+                      color: Colors.black87,
+                      height: 1.5,
+                      fontSize: 13.5,
+                    ),
                     children: [
                       const TextSpan(
                         text: 'Analisis: ',
@@ -315,8 +307,6 @@ class _ResultViewState extends State<ResultView>
                     ],
                   ),
                 ),
-
-                // Rekomendasi (collapsible)
                 if (report.recommendations.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   InkWell(
@@ -364,8 +354,9 @@ class _ResultViewState extends State<ResultView>
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children:
-                            report.recommendations.asMap().entries.map((entry) {
+                        children: report.recommendations.asMap().entries.map((
+                          entry,
+                        ) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: Row(
@@ -377,7 +368,9 @@ class _ResultViewState extends State<ResultView>
                                   child: Text(
                                     '${entry.key + 1}',
                                     style: const TextStyle(
-                                        color: Colors.white, fontSize: 10),
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -412,7 +405,6 @@ class _ResultViewState extends State<ResultView>
     );
   }
 
-  // ─── Small Stat Card ───────────────────────────────────────────────────────
   Widget _buildSmallStatCard(String title, String value, Color valueColor) {
     return Expanded(
       child: Container(
@@ -447,7 +439,6 @@ class _ResultViewState extends State<ResultView>
     );
   }
 
-  // ─── Save Button ──────────────────────────────────────────────────────────
   Widget _buildSaveButton() {
     return SizedBox(
       width: double.infinity,
@@ -473,11 +464,13 @@ class _ResultViewState extends State<ResultView>
                           ? 'Berhasil disimpan ke riwayat!'
                           : 'Tidak ada data untuk disimpan.',
                     ),
-                    backgroundColor:
-                        success ? const Color(0xFF4E342E) : Colors.red.shade700,
+                    backgroundColor: success
+                        ? const Color(0xFF4E342E)
+                        : Colors.red.shade700,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     margin: const EdgeInsets.all(16),
                     duration: const Duration(seconds: 2),
                   ),
@@ -488,7 +481,9 @@ class _ResultViewState extends State<ResultView>
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : Icon(
                 _savedDone
@@ -505,9 +500,7 @@ class _ResultViewState extends State<ResultView>
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: _savedDone
-              ? const Color(0xFF4A7C3F)
-              : accentBrown,
+          backgroundColor: _savedDone ? const Color(0xFF4A7C3F) : accentBrown,
           disabledBackgroundColor: _savedDone
               ? const Color(0xFF4A7C3F)
               : accentBrown.withValues(alpha: 0.6),
@@ -520,7 +513,6 @@ class _ResultViewState extends State<ResultView>
   }
 }
 
-// ─── Analyzing Loading Screen ─────────────────────────────────────────────────
 class _AnalyzingScreen extends StatefulWidget {
   final Color bgColor;
   final Color accentBrown;
@@ -550,10 +542,10 @@ class _AnalyzingScreenState extends State<_AnalyzingScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
-    // Ganti teks langkah setiap ~520ms
+    _pulseAnim = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     Future.forEach(
       List.generate(_steps.length - 1, (i) => i),
       (i) => Future.delayed(Duration(milliseconds: 520 * (i + 1)), () {
@@ -578,7 +570,6 @@ class _AnalyzingScreenState extends State<_AnalyzingScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon pulsing
               ScaleTransition(
                 scale: _pulseAnim,
                 child: Container(
@@ -610,18 +601,15 @@ class _AnalyzingScreenState extends State<_AnalyzingScreen>
                 ),
               ),
               const SizedBox(height: 12),
-              // Progress bar indeterminate
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
                   minHeight: 6,
                   backgroundColor: widget.accentBrown.withValues(alpha: 0.15),
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(widget.accentBrown),
+                  valueColor: AlwaysStoppedAnimation<Color>(widget.accentBrown),
                 ),
               ),
               const SizedBox(height: 18),
-              // Step label dengan AnimatedSwitcher
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: Row(
@@ -646,7 +634,6 @@ class _AnalyzingScreenState extends State<_AnalyzingScreen>
                 ),
               ),
               const SizedBox(height: 40),
-              // Dot row indicator
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (i) {

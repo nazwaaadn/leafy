@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DetectionItem {
-  /// Bounding box koordinat NORMALIZED (0.0–1.0)
   final Rect box;
-
-  /// Label kelas penyakit sesuai labels.txt training Anda
   final String label;
-
-  /// Skor kepercayaan model (0.0–1.0)
   final double confidence;
 
   const DetectionItem({
@@ -16,9 +11,6 @@ class DetectionItem {
     required this.confidence,
   });
 
-  /// Parse dari raw output flutter_vision.
-  /// flutter_vision mengembalikan box [x1, y1, x2, y2] dalam piksel
-  /// → dinormalisasi ke 0.0–1.0 agar painter bisa scale ke ukuran layar.
   factory DetectionItem.fromRaw({
     required Map<String, dynamic> raw,
     required int imageWidth,

@@ -158,7 +158,7 @@ class _OnboardingViewState extends State<OnboardingView>
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4A7C3F).withOpacity(0.40),
+            color: const Color(0xFF4A7C3F).withValues(alpha: 0.40),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -185,7 +185,7 @@ class _OnboardingViewState extends State<OnboardingView>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(32),
           ),
-          shadowColor: const Color(0xFF3A7D1E).withOpacity(0.4),
+          shadowColor: const Color(0xFF3A7D1E).withValues(alpha: 0.4),
         ),
         child: const Text(
           'Mulai Sekarang',
@@ -219,9 +219,7 @@ class _OnboardingViewState extends State<OnboardingView>
               decoration: TextDecoration.underline,
               decorationColor: Color(0xFF3A7D1E),
             ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-              },
+            recognizer: TapGestureRecognizer()..onTap = () {},
           ),
           const TextSpan(text: ' · '),
           TextSpan(
@@ -232,9 +230,7 @@ class _OnboardingViewState extends State<OnboardingView>
               decoration: TextDecoration.underline,
               decorationColor: Color(0xFF3A7D1E),
             ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-              },
+            recognizer: TapGestureRecognizer()..onTap = () {},
           ),
         ],
       ),
@@ -390,16 +386,16 @@ class _ScanLeafPainter extends CustomPainter {
     );
 
     final circlePaint = Paint()
-      ..color = Colors.white.withOpacity(0.85)
+      ..color = Colors.white.withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
     canvas.drawCircle(Offset(cx, cy), size.width * 0.16, circlePaint);
     final dotPaint = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+      ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(cx, cy), 3.0, dotPaint);
     final veinPaint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
+      ..color = Colors.white.withValues(alpha: 0.3)
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(

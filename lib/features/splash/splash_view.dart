@@ -128,7 +128,7 @@ class _SplashViewState extends State<SplashView>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4A7C3F).withOpacity(0.35),
+            color: const Color(0xFF4A7C3F).withValues(alpha: 0.35),
             blurRadius: 28,
             offset: const Offset(0, 12),
           ),
@@ -241,7 +241,7 @@ class _ScanLeafPainter extends CustomPainter {
     canvas.drawPath(leafPath, leafPaint);
 
     final scanPaint = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+      ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round;
@@ -294,7 +294,7 @@ class _ScanLeafPainter extends CustomPainter {
       Offset(cx, cy),
       size.width * 0.16,
       Paint()
-        ..color = Colors.white.withOpacity(0.85)
+        ..color = Colors.white.withValues(alpha: 0.85)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0,
     );
@@ -303,7 +303,7 @@ class _ScanLeafPainter extends CustomPainter {
       Offset(cx, cy),
       3.0,
       Paint()
-        ..color = Colors.white.withOpacity(0.9)
+        ..color = Colors.white.withValues(alpha: 0.9)
         ..style = PaintingStyle.fill,
     );
 
@@ -311,7 +311,7 @@ class _ScanLeafPainter extends CustomPainter {
       Offset(cx, cy - size.height * 0.35),
       Offset(cx, cy + size.height * 0.35),
       Paint()
-        ..color = Colors.white.withOpacity(0.3)
+        ..color = Colors.white.withValues(alpha: 0.3)
         ..strokeWidth = 1.5
         ..strokeCap = StrokeCap.round,
     );

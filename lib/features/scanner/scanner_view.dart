@@ -256,7 +256,7 @@ class _ScannerViewState extends State<ScannerView> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.75),
+        color: Colors.black.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -437,7 +437,7 @@ class _HistorySheet extends StatelessWidget {
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, _) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.image_not_supported,
                         color: Colors.white38,
                       ),

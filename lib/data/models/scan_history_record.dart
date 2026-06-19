@@ -2,14 +2,13 @@ import 'package:hive/hive.dart';
 
 part 'scan_history_record.g.dart';
 
-/// typeId: 1  (DetectionResult pakai typeId: 0)
 @HiveType(typeId: 1)
 class ScanHistoryRecord extends HiveObject {
   @HiveField(0)
   final String id;
 
   @HiveField(1)
-  final String conditionName; // nama penyakit / "Sehat"
+  final String conditionName;
 
   @HiveField(2)
   final double accuracyPercent;
@@ -21,7 +20,7 @@ class ScanHistoryRecord extends HiveObject {
   bool isSynced;
 
   @HiveField(5)
-  final DateTime scannedAt; // timestamp lengkap
+  final DateTime scannedAt;
 
   ScanHistoryRecord({
     required this.id,
@@ -32,13 +31,11 @@ class ScanHistoryRecord extends HiveObject {
     required this.scannedAt,
   });
 
-  /// Key yang dipakai di Hive box — sama dgn id
   String get dateKey {
     final d = scannedAt;
     return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
-  /// Format jam tampilan  "HH:mm"
   String get timeLabel {
     final d = scannedAt;
     return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';

@@ -12,7 +12,6 @@ enum SyncStatus { local, synced }
 
 enum HealthStatus { healthy, diseased }
 
-/// Wrapper ringan agar history_view.dart tetap kompatibel
 class ScanRecord {
   final String logId;
   final String conditionName;
@@ -30,27 +29,27 @@ class ScanRecord {
     required this.healthStatus,
   });
 
-  /// Konversi dari ScanHistoryRecord (Hive model typeId:1)
   factory ScanRecord.fromHive(ScanHistoryRecord r) {
     final dt = r.scannedAt.toLocal();
     return ScanRecord(
       logId: '#${r.id.substring(0, r.id.length.clamp(0, 6)).toUpperCase()}',
       conditionName: r.conditionName,
-      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      time:
+          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
       accuracyPercent: r.accuracyPercent.round(),
       syncStatus: r.isSynced ? SyncStatus.synced : SyncStatus.local,
       healthStatus: r.isHealthy ? HealthStatus.healthy : HealthStatus.diseased,
     );
   }
 
-  /// Konversi dari DetectionResult (Hive model typeId:0)
   factory ScanRecord.fromDetectionResult(DetectionResult r) {
     final dt = r.detectedAt.toLocal();
     final label = r.label;
     return ScanRecord(
       logId: '#${r.id.substring(0, r.id.length.clamp(0, 6)).toUpperCase()}',
       conditionName: label.isEmpty ? 'Tidak Diketahui' : label,
-      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      time:
+          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
       accuracyPercent: (r.confidence * 100).round().clamp(0, 100),
       syncStatus: r.isSynced ? SyncStatus.synced : SyncStatus.local,
       healthStatus: label.toLowerCase().contains('healthy')
@@ -83,7 +82,6 @@ class HistoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Daftarkan callback ke SyncService agar UI otomatis refresh setelah sync
     SyncService().onSyncComplete = () {
       _loadData();
     };
@@ -111,7 +109,6 @@ class HistoryController extends GetxController {
   }
 
   Future<void> _loadFromMongo() async {
-    // Baca dari collection 'scan_history' (bukan 'detections')
     final grouped = await _mongo.getScanHistoryGroupedByDate(
       userId: _session.currentUser?.id,
     );
@@ -132,8 +129,6 @@ class HistoryController extends GetxController {
   void _loadFromHive() {
     try {
       final Map<String, List<ScanRecord>> result = {};
-
-      // Prioritaskan ScanHistoryRecord box (typeId:1) jika ada
       if (Hive.isBoxOpen('scan_history')) {
         final box = Hive.box<ScanHistoryRecord>('scan_history');
         for (final item in box.values) {
@@ -142,12 +137,13 @@ class HistoryController extends GetxController {
         }
       }
 
-      // Fallback ke DetectionResult box (typeId:0) jika scan_history kosong
       if (result.isEmpty && Hive.isBoxOpen('detections')) {
         final box = Hive.box<DetectionResult>('detections');
         for (final item in box.values) {
           final dateKey = _fmt(item.detectedAt.toLocal());
-          result.putIfAbsent(dateKey, () => []).add(ScanRecord.fromDetectionResult(item));
+          result
+              .putIfAbsent(dateKey, () => [])
+              .add(ScanRecord.fromDetectionResult(item));
         }
       }
 
@@ -163,11 +159,11 @@ class HistoryController extends GetxController {
   }
 
   ScanRecord _mongoDocToScanRecord(Map<String, dynamic> doc) {
-    // Baca field dari collection scan_history
     final conditionName = (doc['conditionName'] ?? '').toString();
     final accuracy = (doc['accuracyPercent'] ?? 0.0) as num;
     final rawIsHealthy = doc['isHealthy'];
-    final isHealthy = rawIsHealthy == true ||
+    final isHealthy =
+        rawIsHealthy == true ||
         rawIsHealthy?.toString().toLowerCase() == 'true' ||
         conditionName.toLowerCase() == 'sehat' ||
         conditionName.toLowerCase().contains('healthy');
@@ -178,13 +174,13 @@ class HistoryController extends GetxController {
     return ScanRecord(
       logId: _shortId(doc['_id']?.toString() ?? ''),
       conditionName: conditionName.isEmpty ? 'Tidak Diketahui' : conditionName,
-      time: '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+      time:
+          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
       accuracyPercent: accuracy.round().clamp(0, 100),
       syncStatus: isSynced ? SyncStatus.synced : SyncStatus.local,
       healthStatus: isHealthy ? HealthStatus.healthy : HealthStatus.diseased,
     );
   }
-
 
   String _shortId(String id) {
     if (id.isEmpty) return '#???';
@@ -192,7 +188,6 @@ class HistoryController extends GetxController {
     return '#${clean.substring(0, clean.length.clamp(0, 6)).toUpperCase()}';
   }
 
-  /// Hitung berapa banyak data lokal yang belum tersinkron
   void _updatePendingCount() {
     int count = 0;
     try {
@@ -212,7 +207,6 @@ class HistoryController extends GetxController {
     pendingCount.value = count;
   }
 
-  /// Muat ulang data riwayat (dipanggil setelah simpan dari ResultView)
   Future<void> refreshHistory() => _loadData();
 
   String _labelToConditionName(String label) {
@@ -251,13 +245,11 @@ class HistoryController extends GetxController {
     final currentMonth = DateTime(now.year, now.month);
     final pickedMonth = DateTime(picked.year, picked.month);
 
-    // Tolak bulan/tahun di masa depan
     if (pickedMonth.isAfter(currentMonth)) return;
 
     final newMonth = pickedMonth;
     activeMonth.value = newMonth;
 
-    // Jika bulan yang dipilih adalah bulan ini, batas hari maksimal adalah hari ini
     final firstDay = DateTime(newMonth.year, newMonth.month, 1);
     selectedDate.value = firstDay;
 
@@ -272,8 +264,6 @@ class HistoryController extends GetxController {
     });
   }
 
-  /// Ambil records untuk tanggal yang dipilih sebagai [ScanRecord] agar
-  /// history_view.dart tetap kompatibel
   List<ScanRecord> get recordsForSelectedDate {
     return _scanData[_fmt(selectedDate.value)] ?? [];
   }
@@ -282,7 +272,6 @@ class HistoryController extends GetxController {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final target = DateTime(date.year, date.month, date.day);
-    // Tolak tanggal di masa depan
     if (target.isAfter(today)) return;
     selectedDate.value = date;
   }
@@ -298,8 +287,18 @@ class HistoryController extends GetxController {
 
   String formattedSelectedDate() {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     final d = selectedDate.value;
     return '${d.day} ${months[d.month - 1]} ${d.year}';
@@ -307,8 +306,18 @@ class HistoryController extends GetxController {
 
   String formattedActiveMonth() {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     final m = activeMonth.value;
     return '${months[m.month - 1]} ${m.year}';
